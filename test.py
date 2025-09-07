@@ -1,10 +1,11 @@
 import requests
 import os
+from dotenv import load_dotenv
 from datetime import datetime, timezone
 
-print(os.getenv("NOTION_TOKEN"))
-NOTION_TOKEN = os.getenv("NOTION_TOKEN")
-DATABASE_ID = "267ad5f651558059b594ff3c83db5e42"
+load_dotenv()
+NOTION_TOKEN = os.environ["NOTION_TOKEN"]
+DATABASE_ID = os.environ["DATABASE_ID"]
 
 headers = {
     "Authorization": "Bearer " + NOTION_TOKEN,

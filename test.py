@@ -1,30 +1,33 @@
 from notion_client import Client
-from pprint import pprint
 import os
 from dotenv import load_dotenv
+from openai import OpenAI
+import json
 
-# Load environment variables
+# --- Load environment variables ---
 load_dotenv()
 notion_token = os.getenv("NOTION_TOKEN")
-notion_page_id = os.getenv("PAGE_ID")  # hyphenated form preferred: 267ad5f6-5155-8081-a9fd-fa77fd4da2c5
+notion_page_id = os.getenv("PAGE_ID")  # hyphenated: 267ad5f6-5155-8081-a9fd-fa77fd4da2c5
+openai_api_key = os.getenv("OPENAI_API_KEY")
 
+# --- Initialize clients ---
+notion_client = Client(auth=notion_token)
+openai_client = OpenAI(api_key=openai_api_key)
+
+# --- Notion text extraction ---
 def extract_text_from_block(block):
-    """Extract plain text from a Notion block if it has rich_text or title."""
     block_type = block.get("type")
     block_obj = block.get(block_type, {})
 
     text_segments = []
-    # Most text blocks have rich_text
     if "rich_text" in block_obj:
         for rt in block_obj["rich_text"]:
             text_segments.append(rt.get("plain_text", ""))
-    # Some blocks like child_page have 'title'
     elif "title" in block_obj:
         text_segments.append(block_obj["title"])
     return "".join(text_segments).strip()
 
 def get_page_text(client, page_id):
-    """Recursively fetches all text content from a Notion page."""
     all_text = []
 
     def fetch_blocks(block_id):
@@ -36,8 +39,7 @@ def get_page_text(client, page_id):
             if block.get("has_children", False):
                 fetch_blocks(block["id"])
         if blocks.get("has_more"):
-            # If there are more blocks, fetch them too
-            next_cursor = blocks["next_cursor"]
+            next_cursor = blocks.get("next_cursor")
             if next_cursor:
                 more_blocks = client.blocks.children.list(block_id=block_id, start_cursor=next_cursor)
                 for block in more_blocks.get("results", []):
@@ -50,11 +52,67 @@ def get_page_text(client, page_id):
     fetch_blocks(page_id)
     return "\n".join(all_text)
 
+# --- OpenAI flashcard generation ---
+def generate_flashcards(text):
+    """
+    Generate Q&A flashcards using GPT-4 and new OpenAI SDK.
+    Returns a list of {"question": "...", "answer": "..."} dicts.
+    """
+    prompt = f"""
+You are an expert at creating study flashcards.
+Given the following text, generate concise flashcards.
+Output only a JSON list in this format: 
+[{{"question": "...", "answer": "..."}}]
+
+Text:
+{text}
+"""
+    response = openai_client.chat.completions.create(
+        model="gpt-4",
+        messages=[
+            {"role": "system", "content": "You are an expert at creating study flashcards."},
+            {"role": "user", "content": prompt}
+        ],
+        temperature=0.3,
+        max_tokens=1500
+    )
+
+    content = response.choices[0].message.content
+
+    # Try to parse JSON
+    try:
+        flashcards = json.loads(content)
+    except json.JSONDecodeError:
+        print("Warning: Could not parse JSON. Raw content:")
+        print(content)
+        flashcards = []
+
+    return flashcards
+
+# --- Convert to Anki-friendly format ---
+def export_to_anki_json(flashcards, filename="anki_flashcards.json"):
+    """
+    Exports flashcards as a list of [question, answer] for Anki import.
+    """
+    anki_list = [[fc["question"], fc["answer"]] for fc in flashcards if "question" in fc and "answer" in fc]
+    with open(filename, "w", encoding="utf-8") as f:
+        json.dump(anki_list, f, ensure_ascii=False, indent=4)
+    print(f"Exported {len(anki_list)} flashcards to {filename}")
+
+# --- Main ---
 def main():
-    client = Client(auth=notion_token)
-    text = get_page_text(client, notion_page_id)
-    print("Extracted page text:\n")
-    print(text if text else "(No text found)")
+    print("Fetching all text from Notion page...")
+    page_text = get_page_text(notion_client, notion_page_id)
+    print(f"Extracted {len(page_text)} characters of text.\n")
+
+    print("Generating flashcards via OpenAI GPT-4...\n")
+    flashcards = generate_flashcards(page_text)
+
+    if flashcards:
+        print(f"Generated {len(flashcards)} flashcards. Exporting to JSON for Anki...\n")
+        export_to_anki_json(flashcards)
+    else:
+        print("No flashcards generated.")
 
 if __name__ == "__main__":
     main()

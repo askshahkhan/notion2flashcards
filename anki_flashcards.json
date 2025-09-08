@@ -5,26 +5,26 @@
     ],
     [
         "What is innate immunity?",
-        "Innate immunity is the body’s first line of defense and is present from birth. It provides rapid, non-specific protection against pathogens and includes physical barriers, chemical defenses, and cellular defenses."
+        "Innate immunity is the body’s first line of defense and is present from birth. It provides rapid, non-specific protection against pathogens. It includes physical barriers, chemical defenses, and cellular defenses."
     ],
     [
         "What is adaptive immunity?",
-        "Adaptive immunity develops over time as the body encounters and learns to recognize specific pathogens. It involves specialized cells, such as B cells and T cells, and has memory, meaning it can respond more rapidly and effectively upon subsequent exposures to the same pathogen."
+        "Adaptive immunity develops over time as the body encounters and learns to recognize specific pathogens. It involves specialized cells, such as B lymphocytes (B cells) and T lymphocytes (T cells). Adaptive immunity has memory, meaning it can respond more rapidly and effectively upon subsequent exposures to the same pathogen."
     ],
     [
         "What is the role of the lymphatic system in immune defense?",
-        "The lymphatic system is a network of vessels, nodes, and organs that plays a central role in immune defense. It filters foreign particles and houses immune cells, removes damaged cells and pathogens, and helps transport immune cells and signals throughout the body."
+        "The lymphatic system is a network of vessels, nodes, and organs that plays a central role in immune defense. It filters foreign particles and houses immune cells that respond to infections. It also helps transport immune cells and signals throughout the body."
     ],
     [
-        "What happens during an inflammatory response?",
-        "When the immune system detects an invasion or tissue damage, it triggers an inflammatory response. This involves increased blood flow, swelling, redness, and heat in the affected area, bringing immune cells to the site of infection or injury and facilitating healing."
+        "What is the immune system's response to an invasion or tissue damage?",
+        "When the immune system detects an invasion or tissue damage, it triggers an inflammatory response. This involves increased blood flow, swelling, redness, and heat in the affected area, which helps bring immune cells to the site of infection or injury and facilitates healing."
     ],
     [
         "What are autoimmune disorders?",
-        "Autoimmune disorders occur when the immune system mistakenly attacks the body’s own healthy cells. Examples include type 1 diabetes, multiple sclerosis, and rheumatoid arthritis. These conditions occur when immune tolerance is lost."
+        "Autoimmune disorders occur when the immune system mistakenly attacks the body’s own healthy cells. Examples include type 1 diabetes, multiple sclerosis, and rheumatoid arthritis. These conditions occur when immune tolerance—the ability to recognize self-tissues—is lost."
     ],
     [
-        "How do vaccines work?",
-        "Vaccines expose the body to harmless forms or pieces of pathogens, prompting the adaptive immune system to develop memory cells without causing disease. This allows for faster, stronger responses during future exposures, greatly reducing the risk of severe illness."
+        "What is the purpose of immunization and vaccines?",
+        "Vaccines are tools for training the immune system. They expose the body to harmless forms or pieces of pathogens, prompting the adaptive immune system to develop memory cells without causing disease. This allows for faster, stronger responses during future exposures, greatly reducing the risk of severe illness."
     ]
 ]

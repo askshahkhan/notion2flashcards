@@ -3,11 +3,12 @@ import os
 from dotenv import load_dotenv
 from openai import OpenAI
 import json
+import genanki  # NEW: For creating Anki .apkg files
 
 # --- Load environment variables ---
 load_dotenv()
 notion_token = os.getenv("NOTION_TOKEN")
-notion_page_id = os.getenv("PAGE_ID")  # hyphenated: 267ad5f6-5155-8081-a9fd-fa77fd4da2c5
+notion_page_id = os.getenv("PAGE_ID")
 openai_api_key = os.getenv("OPENAI_API_KEY")
 
 # --- Initialize clients ---
@@ -79,7 +80,6 @@ Text:
 
     content = response.choices[0].message.content
 
-    # Try to parse JSON
     try:
         flashcards = json.loads(content)
     except json.JSONDecodeError:
@@ -89,15 +89,34 @@ Text:
 
     return flashcards
 
-# --- Convert to Anki-friendly format ---
-def export_to_anki_json(flashcards, filename="anki_flashcards.json"):
+# --- Convert to Anki .apkg format ---
+def export_to_anki_apkg(flashcards, filename="anki_flashcards.apkg"):
     """
-    Exports flashcards as a list of [question, answer] for Anki import.
+    Exports flashcards as a real Anki .apkg file using genanki.
     """
-    anki_list = [[fc["question"], fc["answer"]] for fc in flashcards if "question" in fc and "answer" in fc]
-    with open(filename, "w", encoding="utf-8") as f:
-        json.dump(anki_list, f, ensure_ascii=False, indent=4)
-    print(f"Exported {len(anki_list)} flashcards to {filename}")
+    model = genanki.Model(
+        1607392319,
+        'Simple Flashcard Model',
+        fields=[{'name': 'Question'}, {'name': 'Answer'}],
+        templates=[{
+            'name': 'Card 1',
+            'qfmt': '{{Question}}',
+            'afmt': '{{FrontSide}}<hr id="answer">{{Answer}}'
+        }]
+    )
+
+    deck = genanki.Deck(2059400110, 'Generated Flashcards')
+
+    for fc in flashcards:
+        if "question" in fc and "answer" in fc:
+            note = genanki.Note(
+                model=model,
+                fields=[fc["question"], fc["answer"]]
+            )
+            deck.add_note(note)
+
+    genanki.Package(deck).write_to_file(filename)
+    print(f"Exported {len(flashcards)} flashcards to {filename}")
 
 # --- Main ---
 def main():
@@ -109,8 +128,8 @@ def main():
     flashcards = generate_flashcards(page_text)
 
     if flashcards:
-        print(f"Generated {len(flashcards)} flashcards. Exporting to JSON for Anki...\n")
-        export_to_anki_json(flashcards)
+        print(f"Generated {len(flashcards)} flashcards. Exporting to Anki .apkg...\n")
+        export_to_anki_apkg(flashcards)
     else:
         print("No flashcards generated.")
 

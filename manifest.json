@@ -4,12 +4,16 @@
   "version": "0.1",
   "description": "Generate flashcards from Notion pages using GPT-4",
   "permissions": ["storage", "activeTab"],
-  "host_permissions": ["https://api.notion.com/*"],
+  "host_permissions": [
+    "https://api.notion.com/*",
+    "https://api.openai.com/*"
+  ],
   "background": {
-    "service_worker": "background.js"
+    "service_worker": "src/background.js",
+    "type": "module"
   },
   "action": {
-    "default_popup": "popup.html",
+    "default_popup": "src/popup/popup.html",
     "default_icon": {
       "16": "assets/logo_main.png",
       "48": "assets/logo_main.png",

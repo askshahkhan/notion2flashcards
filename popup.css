@@ -1,0 +1,94 @@
+body {
+    font-family: Arial, sans-serif;
+    min-width: 400px;
+    margin: 0;
+    padding: 0;
+    background-color: #f7f7f7;
+    color: #333;
+}
+
+/* Container */
+.container {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* Logo */
+.logo {
+    width: 100px;
+    height: auto;
+    margin-bottom: 15px;
+}
+
+/* Header */
+h2 {
+    margin-bottom: 15px;
+    color: #5e5ce6;
+}
+
+button {
+    padding: 10px 15px;
+    font-size: 14px;
+    background-color: #bc9966; /* Button wallpaper color */
+    color: white;              /* Text color */
+    border: none;
+    cursor: pointer;
+    border-radius: 4px;
+    margin-bottom: 10px;
+}
+
+button:hover {
+    background-color: #a47d4f; /* Darker shade on hover */
+}
+
+/* Flashcards container */
+#output {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+/* Flashcard styling */
+.flashcard {
+    background: #fff;
+    border-radius: 6px;
+    padding: 10px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    display: flex;
+    flex-direction: column;
+    cursor: pointer;
+}
+
+.flashcard .question {
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.flashcard .answer {
+    display: none;
+    color: #555;
+    margin-top: 5px;
+    transition: all 0.2s ease;
+}
+
+.flashcard.revealed .answer {
+    display: block;
+}
+
+#status {
+    margin-top: 10px;
+    font-size: 14px;
+    color: #000000; /* Same color for all status text */
+    text-align: center;
+}
+
+/* Optional dots animation */
+@keyframes dots {
+    0% { content: ""; }
+    33% { content: "."; }
+    66% { content: ".."; }
+    100% { content: "..."; }
+}

@@ -56,12 +56,26 @@ button {
 }
 
 button:hover {
-    background-color: #0f7c9c;
+    background-color: #a47d4f;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
 }
 
 button:active {
     transform: translateY(1px);
+}
+
+/* Secondary button styling */
+.secondary-button {
+    background-color: #f7f6f3;
+    color: #37352f;
+    border: 1px solid #e9e9e7;
+    margin-bottom: 20px;
+}
+
+.secondary-button:hover {
+    background-color: #f1f0ed;
+    border-color: #d9d9d7;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 /* Sparkle icon */

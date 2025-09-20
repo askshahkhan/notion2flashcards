@@ -154,6 +154,9 @@ document.getElementById("fetchButton").addEventListener("click", async () => {
             } else {
               clearInterval(interval);
               statusDiv.textContent = ""; // remove final message
+              
+              // Add the secondary button after all flashcards are loaded
+              addSecondaryButton();
             }
           }, 150);
 
@@ -170,3 +173,25 @@ document.getElementById("fetchButton").addEventListener("click", async () => {
     statusDiv.textContent = "";
   }
 });
+
+// --- Add secondary button after flashcards are generated ---
+function addSecondaryButton() {
+  // Check if button already exists to avoid duplicates
+  if (document.getElementById("secondaryButton")) {
+    return;
+  }
+
+  const secondaryButton = document.createElement("button");
+  secondaryButton.id = "secondaryButton";
+  secondaryButton.textContent = "Export to Anki";
+  secondaryButton.className = "secondary-button";
+  
+  // Add click handler (no functionality for now)
+  secondaryButton.addEventListener("click", () => {
+    console.log("Secondary button clicked - no functionality yet");
+  });
+  
+  // Insert the button after the main button
+  const fetchButton = document.getElementById("fetchButton");
+  fetchButton.parentNode.insertBefore(secondaryButton, fetchButton.nextSibling);
+}

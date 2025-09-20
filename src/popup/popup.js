@@ -174,6 +174,50 @@ document.getElementById("fetchButton").addEventListener("click", async () => {
   }
 });
 
+// --- Generate APKG file directly in popup ---
+function generateAPKGFile(flashcards) {
+  try {
+    // Create a simple APKG-like structure (JSON format for now)
+    const apkgData = {
+      deckName: "Notion Flashcards",
+      cards: flashcards,
+      metadata: {
+        created: new Date().toISOString(),
+        version: "1.0",
+        totalCards: flashcards.length
+      }
+    };
+    
+    // Convert to JSON string
+    const jsonString = JSON.stringify(apkgData, null, 2);
+    
+    // Create blob and download
+    const blob = new Blob([jsonString], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    
+    // Create download link
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const filename = `notion-flashcards-${timestamp}.json`;
+    
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    link.style.display = 'none';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    // Clean up the URL object
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    
+    return { success: true, filename: filename };
+    
+  } catch (error) {
+    console.error("Error generating APKG file:", error);
+    return { success: false, error: error.message };
+  }
+}
+
 // --- Add secondary button after flashcards are generated ---
 function addSecondaryButton() {
   // Check if button already exists to avoid duplicates
@@ -186,9 +230,47 @@ function addSecondaryButton() {
   secondaryButton.textContent = "Export to Anki";
   secondaryButton.className = "secondary-button";
   
-  // Add click handler (no functionality for now)
-  secondaryButton.addEventListener("click", () => {
-    console.log("Secondary button clicked - no functionality yet");
+  // Add click handler for APKG generation
+  secondaryButton.addEventListener("click", async () => {
+    console.log("Export to Anki clicked");
+    
+    if (!latestCards || latestCards.length === 0) {
+      alert("No flashcards to export!");
+      return;
+    }
+    
+    // Show loading state
+    const originalText = secondaryButton.textContent;
+    secondaryButton.textContent = "Generating APKG...";
+    secondaryButton.disabled = true;
+    
+    try {
+      // Generate APKG file directly in popup
+      const result = generateAPKGFile(latestCards);
+      
+      if (result.success) {
+        // Show success message
+        statusDiv.textContent = `APKG file "${result.filename}" downloaded!`;
+        statusDiv.style.color = "#2eaadc";
+        
+        // Reset button after 3 seconds
+        setTimeout(() => {
+          secondaryButton.textContent = originalText;
+          secondaryButton.disabled = false;
+          statusDiv.textContent = "";
+          statusDiv.style.color = "";
+        }, 3000);
+        
+      } else {
+        throw new Error(result.error);
+      }
+      
+    } catch (err) {
+      console.error("Error generating APKG:", err);
+      alert("Error generating APKG: " + err.message);
+      secondaryButton.textContent = originalText;
+      secondaryButton.disabled = false;
+    }
   });
   
   // Insert the button after the main button

@@ -1,5 +1,4 @@
-const NOTION_API_KEY = "";
-const NOTION_PAGE_ID = "";
+import { NOTION_API_KEY, NOTION_PAGE_ID } from '../../secrets.js';
 
 const output = document.getElementById("output");
 const statusDiv = document.getElementById("status");
@@ -29,6 +28,8 @@ async function fetchBlocksRecursive(blockId, allText = []) {
 
   while (hasMore) {
     const query = startCursor ? `?start_cursor=${startCursor}` : "";
+    console.log(`Fetching Notion blocks from: ${url}${query}`);
+    
     const response = await fetch(url + query, {
       method: "GET",
       headers: {
@@ -38,12 +39,30 @@ async function fetchBlocksRecursive(blockId, allText = []) {
       }
     });
 
+    console.log("Notion API response status:", response.status);
+    
+    if (!response.ok) {
+      const errorData = await response.text();
+      console.error("Notion API error:", errorData);
+      throw new Error(`Notion API request failed: ${response.status} - ${errorData}`);
+    }
+
     const data = await response.json();
+    console.log("Notion API response data:", data);
+    
+    if (!data.results) {
+      console.error("Unexpected Notion API response structure:", data);
+      throw new Error("Invalid Notion API response structure");
+    }
+    
     for (const block of data.results) {
       count++;
       statusDiv.textContent = `Fetching Notion content… ${count} blocks`;
       const text = extractTextFromBlock(block);
-      if (text) allText.push(text);
+      if (text) {
+        allText.push(text);
+        console.log(`Extracted text from block ${block.type}:`, text.substring(0, 100));
+      }
       if (block.has_children) {
         await fetchBlocksRecursive(block.id, allText);
       }
@@ -53,6 +72,7 @@ async function fetchBlocksRecursive(blockId, allText = []) {
     startCursor = data.next_cursor;
   }
 
+  console.log(`Total blocks processed: ${count}, Total text segments: ${allText.length}`);
   return allText;
 }
 
@@ -63,20 +83,41 @@ document.getElementById("fetchButton").addEventListener("click", async () => {
   statusDiv.textContent = "Fetching Notion content…";
 
   try {
+    console.log("Starting Notion fetch for page ID:", NOTION_PAGE_ID);
     const allText = await fetchBlocksRecursive(NOTION_PAGE_ID);
     const notionText = allText.join("\n\n");
+    
+    console.log("Extracted text length:", notionText.length);
+    console.log("First 200 chars of text:", notionText.substring(0, 200));
+    
+    if (!notionText.trim()) {
+      output.textContent = "No text content found in Notion page. Please check if the page has content and the API key has access.";
+      statusDiv.textContent = "";
+      return;
+    }
 
     statusDiv.textContent = "Generating flashcards with GPT-4…";
 
     chrome.runtime.sendMessage(
       { action: "generateFlashcards", text: notionText },
       (response) => {
-        if (response.success) {
+        console.log("Received response from background script:", response);
+        
+        if (chrome.runtime.lastError) {
+          console.error("Chrome runtime error:", chrome.runtime.lastError);
+          output.textContent = "Error communicating with background script: " + chrome.runtime.lastError.message;
+          statusDiv.textContent = "";
+          return;
+        }
+        
+        if (response && response.success) {
           const cards = response.flashcards;
           latestCards = cards; // store for potential later use
 
-          if (!cards.length) {
-            output.textContent = "No flashcards generated.";
+          console.log("Generated flashcards:", cards);
+          
+          if (!cards || !cards.length) {
+            output.textContent = "No flashcards generated. The AI might not have found suitable content to create flashcards from.";
             statusDiv.textContent = "";
             return;
           }

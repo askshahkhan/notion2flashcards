@@ -1,279 +1,67 @@
-import { NOTION_API_KEY, NOTION_PAGE_ID } from '../../secrets.js';
+import { fetchNotionContent } from '../services/notion-api.js';
+import { generateFlashcards } from '../services/flashcard-generator.js';
+import { exportFlashcards } from '../services/apkg-exporter.js';
+import { UIController } from '../components/ui-controller.js';
 
-const output = document.getElementById("output");
-const statusDiv = document.getElementById("status");
-let latestCards = []; // store generated flashcards
-
-// --- Extract text from Notion block ---
-function extractTextFromBlock(block) {
-  const blockType = block.type;
-  const blockObj = block[blockType] || {};
-  let textSegments = [];
-
-  if (blockObj.rich_text) {
-    blockObj.rich_text.forEach(rt => textSegments.push(rt.plain_text || ""));
-  } else if (blockObj.title) {
-    textSegments.push(blockObj.title);
-  }
-
-  return textSegments.join("").trim();
-}
-
-// --- Recursively fetch Notion page blocks ---
-async function fetchBlocksRecursive(blockId, allText = []) {
-  let url = `https://api.notion.com/v1/blocks/${blockId}/children`;
-  let hasMore = true;
-  let startCursor = null;
-  let count = 0;
-
-  while (hasMore) {
-    const query = startCursor ? `?start_cursor=${startCursor}` : "";
-    console.log(`Fetching Notion blocks from: ${url}${query}`);
-    
-    const response = await fetch(url + query, {
-      method: "GET",
-      headers: {
-        "Authorization": `Bearer ${NOTION_API_KEY}`,
-        "Notion-Version": "2022-06-28",
-        "Content-Type": "application/json"
-      }
-    });
-
-    console.log("Notion API response status:", response.status);
-    
-    if (!response.ok) {
-      const errorData = await response.text();
-      console.error("Notion API error:", errorData);
-      throw new Error(`Notion API request failed: ${response.status} - ${errorData}`);
-    }
-
-    const data = await response.json();
-    console.log("Notion API response data:", data);
-    
-    if (!data.results) {
-      console.error("Unexpected Notion API response structure:", data);
-      throw new Error("Invalid Notion API response structure");
-    }
-    
-    for (const block of data.results) {
-      count++;
-      statusDiv.textContent = `Fetching Notion content… ${count} blocks`;
-      const text = extractTextFromBlock(block);
-      if (text) {
-        allText.push(text);
-        console.log(`Extracted text from block ${block.type}:`, text.substring(0, 100));
-      }
-      if (block.has_children) {
-        await fetchBlocksRecursive(block.id, allText);
-      }
-    }
-
-    hasMore = data.has_more;
-    startCursor = data.next_cursor;
-  }
-
-  console.log(`Total blocks processed: ${count}, Total text segments: ${allText.length}`);
-  return allText;
-}
+// Initialize UI controller
+const uiController = new UIController();
 
 // --- Generate flashcards ---
 document.getElementById("fetchButton").addEventListener("click", async () => {
-  output.innerHTML = "";
-  latestCards = [];
-  statusDiv.textContent = "Fetching Notion content…";
+  uiController.clearOutput();
+  uiController.updateStatus("Fetching Notion content…");
 
   try {
-    console.log("Starting Notion fetch for page ID:", NOTION_PAGE_ID);
-    const allText = await fetchBlocksRecursive(NOTION_PAGE_ID);
-    const notionText = allText.join("\n\n");
-    
-    console.log("Extracted text length:", notionText.length);
-    console.log("First 200 chars of text:", notionText.substring(0, 200));
+    // Fetch content from Notion
+    const notionText = await fetchNotionContent((status) => {
+      uiController.updateStatus(status);
+    });
     
     if (!notionText.trim()) {
-      output.textContent = "No text content found in Notion page. Please check if the page has content and the API key has access.";
-      statusDiv.textContent = "";
+      uiController.showError("No text content found in Notion page. Please check if the page has content and the API key has access.");
       return;
     }
 
-    statusDiv.textContent = "Generating flashcards with GPT-4…";
-
-    chrome.runtime.sendMessage(
-      { action: "generateFlashcards", text: notionText },
-      (response) => {
-        console.log("Received response from background script:", response);
-        
-        if (chrome.runtime.lastError) {
-          console.error("Chrome runtime error:", chrome.runtime.lastError);
-          output.textContent = "Error communicating with background script: " + chrome.runtime.lastError.message;
-          statusDiv.textContent = "";
-          return;
-        }
-        
-        if (response && response.success) {
-          const cards = response.flashcards;
-          latestCards = cards; // store for potential later use
-
-          console.log("Generated flashcards:", cards);
-          
-          if (!cards || !cards.length) {
-            output.textContent = "No flashcards generated. The AI might not have found suitable content to create flashcards from.";
-            statusDiv.textContent = "";
-            return;
-          }
-
-          output.innerHTML = "";
-          let index = 0;
-
-          // Gradually append flashcards
-          const interval = setInterval(() => {
-            if (index < cards.length) {
-              const card = cards[index];
-              const cardDiv = document.createElement("div");
-              cardDiv.className = "flashcard";
-
-              const qDiv = document.createElement("div");
-              qDiv.className = "question";
-              qDiv.textContent = card.question;
-
-              const aDiv = document.createElement("div");
-              aDiv.className = "answer";
-              aDiv.textContent = card.answer;
-
-              cardDiv.appendChild(qDiv);
-              cardDiv.appendChild(aDiv);
-
-              // Toggle answer visibility
-              cardDiv.addEventListener("click", () => {
-                cardDiv.classList.toggle("revealed");
-              });
-
-              output.appendChild(cardDiv);
-              index++;
-              statusDiv.textContent = `Loaded ${index} / ${cards.length} flashcards…`;
-            } else {
-              clearInterval(interval);
-              statusDiv.textContent = ""; // remove final message
-              
-              // Add the secondary button after all flashcards are loaded
-              addSecondaryButton();
-            }
-          }, 150);
-
-        } else {
-          output.textContent = "OpenAI failed: " + response.error;
-          statusDiv.textContent = "";
-        }
-      }
-    );
+    // Generate flashcards using the service
+    uiController.updateStatus("Generating flashcards with GPT-4…");
+    const cards = await generateFlashcards(notionText);
+    
+    // Display flashcards
+    uiController.displayFlashcards(cards, () => {
+      // Add export button after flashcards are loaded
+      uiController.addExportButton(handleExportToAnki);
+    });
 
   } catch (err) {
     console.error(err);
-    output.innerHTML = "Failed to fetch Notion page text.";
-    statusDiv.textContent = "";
+    uiController.showError(err.message || "Failed to generate flashcards.");
   }
 });
 
-// --- Generate APKG file directly in popup ---
-function generateAPKGFile(flashcards) {
-  try {
-    // Create a simple APKG-like structure (JSON format for now)
-    const apkgData = {
-      deckName: "Notion Flashcards",
-      cards: flashcards,
-      metadata: {
-        created: new Date().toISOString(),
-        version: "1.0",
-        totalCards: flashcards.length
-      }
-    };
-    
-    // Convert to JSON string
-    const jsonString = JSON.stringify(apkgData, null, 2);
-    
-    // Create blob and download
-    const blob = new Blob([jsonString], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    
-    // Create download link
-    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-    const filename = `notion-flashcards-${timestamp}.json`;
-    
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = filename;
-    link.style.display = 'none';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    
-    // Clean up the URL object
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
-    
-    return { success: true, filename: filename };
-    
-  } catch (error) {
-    console.error("Error generating APKG file:", error);
-    return { success: false, error: error.message };
-  }
-}
-
-// --- Add secondary button after flashcards are generated ---
-function addSecondaryButton() {
-  // Check if button already exists to avoid duplicates
-  if (document.getElementById("secondaryButton")) {
+// --- Handle APKG export ---
+async function handleExportToAnki(button) {
+  console.log("Export to Anki clicked");
+  
+  const cards = uiController.getCards();
+  if (!cards || cards.length === 0) {
+    alert("No flashcards to export!");
     return;
   }
-
-  const secondaryButton = document.createElement("button");
-  secondaryButton.id = "secondaryButton";
-  secondaryButton.textContent = "Export to Anki";
-  secondaryButton.className = "secondary-button";
   
-  // Add click handler for APKG generation
-  secondaryButton.addEventListener("click", async () => {
-    console.log("Export to Anki clicked");
+  const originalText = uiController.showExportProgress(button);
+  
+  try {
+    // Export flashcards using the service
+    const result = exportFlashcards(cards, "Notion Flashcards");
     
-    if (!latestCards || latestCards.length === 0) {
-      alert("No flashcards to export!");
-      return;
+    if (result.success) {
+      uiController.showExportSuccess(button, originalText, result.filename);
+    } else {
+      throw new Error(result.error);
     }
     
-    // Show loading state
-    const originalText = secondaryButton.textContent;
-    secondaryButton.textContent = "Generating APKG...";
-    secondaryButton.disabled = true;
-    
-    try {
-      // Generate APKG file directly in popup
-      const result = generateAPKGFile(latestCards);
-      
-      if (result.success) {
-        // Show success message
-        statusDiv.textContent = `APKG file "${result.filename}" downloaded!`;
-        statusDiv.style.color = "#2eaadc";
-        
-        // Reset button after 3 seconds
-        setTimeout(() => {
-          secondaryButton.textContent = originalText;
-          secondaryButton.disabled = false;
-          statusDiv.textContent = "";
-          statusDiv.style.color = "";
-        }, 3000);
-        
-      } else {
-        throw new Error(result.error);
-      }
-      
-    } catch (err) {
-      console.error("Error generating APKG:", err);
-      alert("Error generating APKG: " + err.message);
-      secondaryButton.textContent = originalText;
-      secondaryButton.disabled = false;
-    }
-  });
-  
-  // Insert the button after the main button
-  const fetchButton = document.getElementById("fetchButton");
-  fetchButton.parentNode.insertBefore(secondaryButton, fetchButton.nextSibling);
+  } catch (err) {
+    console.error("Error exporting flashcards:", err);
+    uiController.showExportError(button, originalText, err.message);
+  }
 }

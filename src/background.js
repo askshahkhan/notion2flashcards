@@ -30,12 +30,12 @@ ${request.text}
                         "Authorization": `Bearer ${OPENAI_API_KEY}`
                     },
                     body: JSON.stringify({
-                        model: "gpt-4",
+                        model: "gpt-3.5-turbo",
                         messages: [
-                            { role: "system", content: "You are a helpful assistant that generates study flashcards. Always respond with valid JSON only." },
+                            { role: "system", content: "You are a helpful assistant that generates study flashcards. Always respond with valid JSON ONLY. Make sure it is in correct format or else parsing will not work." },
                             { role: "user", content: prompt }
                         ],
-                        max_tokens: 1000,
+                        max_tokens: 1500,
                         temperature: 0.7
                     })
                 });

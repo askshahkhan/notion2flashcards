@@ -23,7 +23,7 @@ document.getElementById("fetchButton").addEventListener("click", async () => {
     }
 
     // Generate flashcards using the service
-    uiController.updateStatus("Generating flashcards with GPT-4…");
+    uiController.updateStatus("Generating flashcards...");
     const cards = await generateFlashcards(notionText);
     
     // Display flashcards

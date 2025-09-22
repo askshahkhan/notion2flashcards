@@ -34,10 +34,10 @@ export class UIController {
     return this.latestCards;
   }
 
-  // Create a single flashcard element
   createFlashcardElement(card) {
     const cardDiv = document.createElement("div");
     cardDiv.className = "flashcard";
+    cardDiv.style.position = "relative"; // needed for buttons
 
     const qDiv = document.createElement("div");
     qDiv.className = "question";
@@ -55,7 +55,74 @@ export class UIController {
       cardDiv.classList.toggle("revealed");
     });
 
+    // --- Delete button ---
+    const deleteBtn = document.createElement("button");
+    deleteBtn.className = "delete-btn";
+    deleteBtn.textContent = "✖";
+    deleteBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      cardDiv.remove();
+      this.latestCards = this.latestCards.filter(c => c !== card);
+      this.updateStatus(`${this.latestCards.length} cards remaining`);
+    });
+    cardDiv.appendChild(deleteBtn);
+
+    // --- Edit button ---
+    const editBtn = document.createElement("button");
+    editBtn.className = "edit-btn";
+    editBtn.textContent = "✎"; // pencil icon
+    editBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      this.enableCardEditing(cardDiv, card, qDiv, aDiv);
+    });
+    cardDiv.appendChild(editBtn);
+
     return cardDiv;
+  }
+
+  enableCardEditing(cardDiv, card, qDiv, aDiv) {
+    // Hide original text
+    qDiv.style.display = "none";
+    aDiv.style.display = "none";
+
+    // Create input fields
+    const qInput = document.createElement("input");
+    qInput.type = "text";
+    qInput.value = card.question;
+    qInput.className = "edit-input";
+
+    const aInput = document.createElement("textarea");
+    aInput.value = card.answer;
+    aInput.className = "edit-input";
+
+    cardDiv.insertBefore(qInput, qDiv);
+    cardDiv.insertBefore(aInput, aDiv);
+
+    // Save button
+    const saveBtn = document.createElement("button");
+    saveBtn.textContent = "Save";
+    saveBtn.className = "save-btn";
+    saveBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      // Update card data
+      card.question = qInput.value;
+      card.answer = aInput.value;
+
+      // Update UI
+      qDiv.textContent = card.question;
+      aDiv.textContent = card.answer;
+
+      // Remove inputs and save button
+      qInput.remove();
+      aInput.remove();
+      saveBtn.remove();
+
+      // Show original text again
+      qDiv.style.display = "block";
+      aDiv.style.display = "block";
+    });
+
+    cardDiv.appendChild(saveBtn);
   }
 
   // Display flashcards with animation

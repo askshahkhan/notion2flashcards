@@ -1,46 +1,70 @@
-// Generate APKG file and trigger download
-export function generateAPKGFile(flashcards, deckName = "Notion Flashcards") {
+// Generate APKG file and trigger download using genanki-js
+export async function generateAPKGFile(flashcards, deckName = "Notion Flashcards") {
   try {
     console.log(`Generating APKG file with ${flashcards.length} flashcards`);
-    
-    // Create a simple APKG-like structure (JSON format for now)
-    const apkgData = {
-      deckName: deckName,
-      cards: flashcards,
-      metadata: {
-        created: new Date().toISOString(),
-        version: "1.0",
-        totalCards: flashcards.length,
-        exportedFrom: "Notion Flashcard Generator"
+
+    // Guard: required globals from vendored libs
+    if (typeof Model === 'undefined' || typeof Deck === 'undefined' || typeof Package === 'undefined') {
+      throw new Error("genanki-js is not loaded. Make sure genanki.js is included in popup.html");
+    }
+
+    // Ensure SQL.js is initialized (required by genanki-js)
+    if (!window.SQL) {
+      if (typeof initSqlJs === 'function') {
+        const locate = (filename) => {
+          // Ensure the wasm path resolves within the extension package
+          return chrome?.runtime?.getURL ? chrome.runtime.getURL('vendor/sql/sql-wasm.wasm') : '../../vendor/sql/sql-wasm.wasm';
+        };
+        const cfg = window.config || { locateFile: locate };
+        console.log('Initializing SQL.js...');
+        window.SQL = await initSqlJs(cfg);
+      } else {
+        throw new Error("sql.js is not loaded. Make sure sql-wasm.js is included in popup.html");
       }
-    };
-    
-    // Convert to JSON string
-    const jsonString = JSON.stringify(apkgData, null, 2);
-    
-    // Create blob and download
-    const blob = new Blob([jsonString], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    
-    // Generate filename with timestamp
+    }
+
+    // Define a simple Front/Back model
+    const model = new Model({
+      name: "Basic",
+      id: String(Date.now() - 1000),
+      flds: [
+        { name: "Front" },
+        { name: "Back" }
+      ],
+      req: [
+        [0, "all", [0]],
+        [1, "all", [1]]
+      ],
+      tmpls: [
+        {
+          name: "Card 1",
+          qfmt: "{{Front}}",
+          afmt: "{{FrontSide}}\n\n<hr id=answer>\n\n{{Back}}",
+        }
+      ]
+    });
+
+    // Create deck and add notes
+    const deckId = Date.now();
+    const deck = new Deck(deckId, deckName);
+    flashcards.forEach((card) => {
+      const note = model.note([card.question, card.answer]);
+      deck.addNote(note);
+    });
+
+    // Package and write to file
+    const pkg = new Package();
+    pkg.addDeck(deck);
+
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-    const filename = `notion-flashcards-${timestamp}.json`;
-    
-    // Create and trigger download
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = filename;
-    link.style.display = 'none';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    
-    // Clean up the URL object
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
-    
+    const filename = `notion-flashcards-${timestamp}.apkg`;
+
+    // This triggers a download via FileSaver
+    pkg.writeToFile(filename);
+
     console.log(`APKG file "${filename}" generated successfully`);
-    return { success: true, filename: filename };
-    
+    return { success: true, filename };
+
   } catch (error) {
     console.error("Error generating APKG file:", error);
     return { success: false, error: error.message };

@@ -4,14 +4,25 @@
   <meta charset="UTF-8">
   <title>Notion Flashcards</title>
   <link rel="stylesheet" href="popup.css">
+  <!-- Vendored libraries required by genanki-js (must be classic scripts, loaded before our module) -->
+  <script src="../../vendor/jszip/jszip.min.js"></script>
+  <script src="../../vendor/filesaver/FileSaver.min.js"></script>
+  <script src="../../vendor/sql/sql-wasm.js"></script>
+  <script src="./sql-init.js"></script>
+  <script src="../../vendor/genanki/genanki.js"></script>
 </head>
 <body>
   <div class="container">
     <img src="/assets/logo.png" alt="Logo" class="logo">
 
-    <button id="fetchButton">
-      Generate Flashcards
-    </button>
+    <div class="button-navbar">
+      <button id="fetchButton">
+        Generate Flashcards
+      </button>
+      <button id="exportButton">
+        Export to Anki
+      </button>
+    </div>
 
     <!-- Progress info -->
     <div id="status"></div>

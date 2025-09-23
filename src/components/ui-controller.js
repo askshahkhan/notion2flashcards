@@ -150,26 +150,6 @@ export class UIController {
     }, 150);
   }
 
-  // Add the export button
-  addExportButton(onExportClick) {
-    // Check if button already exists to avoid duplicates
-    if (document.getElementById("secondaryButton")) {
-      return;
-    }
-
-    const secondaryButton = document.createElement("button");
-    secondaryButton.id = "secondaryButton";
-    secondaryButton.textContent = "Export to Anki";
-    secondaryButton.className = "secondary-button";
-    
-    // Add click handler
-    secondaryButton.addEventListener("click", async () => {
-      await onExportClick(secondaryButton);
-    });
-    
-    // Insert the button after the main button
-    this.fetchButton.parentNode.insertBefore(secondaryButton, this.fetchButton.nextSibling);
-  }
 
   // Show export progress
   showExportProgress(button) {

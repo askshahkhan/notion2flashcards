@@ -6,6 +6,16 @@ import { UIController } from '../components/ui-controller.js';
 // Initialize UI controller
 const uiController = new UIController();
 
+// Initialize export button as disabled
+const exportButton = document.getElementById("exportButton");
+exportButton.disabled = true;
+exportButton.style.opacity = "0.5";
+
+// Add event listener for export button
+exportButton.addEventListener("click", async () => {
+  await handleExportToAnki(exportButton);
+});
+
 // --- Generate flashcards ---
 document.getElementById("fetchButton").addEventListener("click", async () => {
   uiController.clearOutput();
@@ -28,8 +38,10 @@ document.getElementById("fetchButton").addEventListener("click", async () => {
     
     // Display flashcards
     uiController.displayFlashcards(cards, () => {
-      // Add export button after flashcards are loaded
-      uiController.addExportButton(handleExportToAnki);
+      // Enable the existing export button after flashcards are loaded
+      const exportButton = document.getElementById("exportButton");
+      exportButton.disabled = false;
+      exportButton.style.opacity = "1";
     });
 
   } catch (err) {
@@ -52,7 +64,7 @@ async function handleExportToAnki(button) {
   
   try {
     // Export flashcards using the service
-    const result = exportFlashcards(cards, "Notion Flashcards");
+    const result = await exportFlashcards(cards, "Notion Flashcards");
     
     if (result.success) {
       uiController.showExportSuccess(button, originalText, result.filename);

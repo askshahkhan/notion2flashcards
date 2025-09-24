@@ -10,7 +10,7 @@ body {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 
                  'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 
                  'Helvetica Neue', sans-serif;
-    min-width: 400px;
+    min-width: 320px;
     margin: 0;
     padding: 0;
     background-color: #ffffff;
@@ -24,11 +24,13 @@ body {
    LAYOUT COMPONENTS
    ============================================================================= */
 .container {
-    padding: 24px;
+    padding: 16px;
     display: flex;
     flex-direction: column;
     align-items: center;
     background-color: #ffffff;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .logo {
@@ -167,10 +169,10 @@ button:active {
 
 /* Flashcard Content */
 .flashcard .question {
-    font-weight: 600;
+    font-weight: 200;
     margin-bottom: 8px;
     color: #37352f;
-    font-size: 15px;
+    font-size: 13px;
     line-height: 1.4;
 }
 

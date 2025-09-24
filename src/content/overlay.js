@@ -36,16 +36,22 @@
     }
     .launcher:hover { background: #f9fafb; box-shadow: 0 6px 18px rgba(0,0,0,0.18); }
     .launcher:active { transform: translateY(1px); }
+    .launcher.hidden { display: none; }
 
     .panel {
       margin-top: 8px;
       display: none;
-      width: 420px; height: 600px;
+      width: 350px; height: 200px;
       background: #ffffff;
       border: 1px solid #e5e7eb;
-      border-radius: 12px;
+      border-radius: 40px;
       overflow: hidden;
       box-shadow: 0 16px 40px rgba(0,0,0,0.25);
+      transition: height 0.3s ease;
+    }
+
+    .panel.expanded {
+      height: 600px;
     }
 
     .panel.open { display: block; }
@@ -83,6 +89,17 @@
   launcher.addEventListener("click", (e) => {
     e.stopPropagation();
     panel.classList.toggle("open");
+    // Hide launcher when panel opens
+    if (panel.classList.contains("open")) {
+      launcher.classList.add("hidden");
+    }
+  });
+
+  // Listen for messages from iframe to expand panel
+  window.addEventListener("message", (e) => {
+    if (e.data && e.data.action === "expandPanel") {
+      panel.classList.add("expanded");
+    }
   });
 
   // Close on outside click (optional)
@@ -94,6 +111,9 @@
     const inside = path.includes(launcher) || path.includes(panel) || path.includes(host) || path.includes(shadow);
     if (!inside) {
       panel.classList.remove("open");
+      panel.classList.remove("expanded");
+      // Show launcher when panel closes
+      launcher.classList.remove("hidden");
     }
   }, true);
 

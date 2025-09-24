@@ -42,6 +42,11 @@ document.getElementById("fetchButton").addEventListener("click", async () => {
       const exportButton = document.getElementById("exportButton");
       exportButton.disabled = false;
       exportButton.style.opacity = "1";
+      
+      // Expand the overlay panel to show flashcards
+      if (window.parent && window.parent !== window) {
+        window.parent.postMessage({ action: "expandPanel" }, "*");
+      }
     });
 
   } catch (err) {

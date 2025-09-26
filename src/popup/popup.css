@@ -172,7 +172,7 @@ button:active {
     font-weight: 200;
     margin-bottom: 8px;
     color: #37352f;
-    font-size: 13px;
+    font-size: 15px;
     line-height: 1.4;
 }
 
@@ -196,8 +196,8 @@ button:active {
 .flashcard .edit-btn,
 .flashcard .save-btn {
     position: absolute;
-    bottom: 32px; /* Positioned above delete button */
-    right: 8px;
+    top: 8px; /* Fixed distance from top */
+    right: 25px; /* Positioned to the left of delete button */
     background: transparent;
     border: none;
     color: #2980b9;
@@ -208,6 +208,7 @@ button:active {
     border-radius: 4px;
     transition: all 0.2s ease;
     box-shadow: none;
+    z-index: 1;
 }
 
 .flashcard .edit-btn:hover,
@@ -218,7 +219,7 @@ button:active {
 /* Delete Button */
 .flashcard .delete-btn {
     position: absolute;
-    bottom: 8px;
+    top: 8px; /* Fixed distance from top */
     right: 8px;
     background: transparent;
     border: none;
@@ -230,6 +231,7 @@ button:active {
     border-radius: 4px;
     transition: all 0.2s ease;
     box-shadow: none;
+    z-index: 1;
 }
 
 .flashcard .delete-btn:hover {
@@ -260,8 +262,42 @@ button:active {
 }
 
 /* =============================================================================
+   LOADING SPINNER
+   ============================================================================= */
+.loading-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    margin: 16px 0;
+}
+
+.spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid #f1f0ed;
+    border-top: 3px solid #2eaadc;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 12px;
+}
+
+.loading-text {
+    color: #6f6e69;
+    font-size: 14px;
+    font-weight: 400;
+    text-align: center;
+}
+
+/* =============================================================================
    ANIMATIONS
    ============================================================================= */
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
 @keyframes sparkle {
     0%, 100% { 
         transform: scale(1) rotate(0deg);
@@ -279,3 +315,5 @@ button:active {
     66% { content: ".."; }
     100% { content: "..."; }
 }
+
+

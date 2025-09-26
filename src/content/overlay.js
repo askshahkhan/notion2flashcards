@@ -7,8 +7,8 @@
   const host = document.createElement("div");
   host.id = OVERLAY_ID;
   host.style.position = "fixed";
-  host.style.top = "12px";
-  host.style.right = "12px";
+  host.style.top = "30px";
+  host.style.right = "8px";
   host.style.zIndex = "2147483647"; // max
   host.style.pointerEvents = "none"; // let page interactions pass through by default
 
@@ -39,7 +39,7 @@
     .launcher.hidden { display: none; }
 
     .panel {
-      margin-top: 8px;
+      margin-top: 25px;
       display: none;
       width: 350px; height: 200px;
       background: #ffffff;

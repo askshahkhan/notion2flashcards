@@ -177,4 +177,25 @@ export class UIController {
     button.textContent = originalText;
     button.disabled = false;
   }
+
+  // Display cost information
+  showCostInfo(costInfo) {
+    if (!costInfo) return;
+
+    const totalCostFormatted = (costInfo.totalCost).toFixed(4);
+    const message = `Generation cost: $${totalCostFormatted} (${costInfo.totalTokens} tokens)`;
+    
+    this.updateStatus(message, '#2eaadc');
+    
+    // Also log detailed cost breakdown to console
+    console.log('💰 Cost Breakdown:', {
+      model: costInfo.model,
+      inputTokens: costInfo.inputTokens,
+      outputTokens: costInfo.outputTokens,
+      totalTokens: costInfo.totalTokens,
+      inputCost: `$${costInfo.inputCost.toFixed(4)}`,
+      outputCost: `$${costInfo.outputCost.toFixed(4)}`,
+      totalCost: `$${costInfo.totalCost.toFixed(4)}`
+    });
+  }
 }

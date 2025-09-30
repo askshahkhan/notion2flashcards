@@ -1,4 +1,5 @@
 import { OPENAI_API_KEY } from '../secrets.js';
+import { CostCalculator } from './utils/cost-calculator.js';
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (request.action === "generateFlashcards") {
@@ -52,6 +53,16 @@ ${request.text}
                 const data = await response.json();
                 console.log("Full API response:", JSON.stringify(data, null, 2));
 
+                // Calculate cost if usage data is available
+                let costInfo = null;
+                if (data.usage) {
+                    costInfo = CostCalculator.calculateCost('gpt-3.5-turbo', data.usage);
+                    if (costInfo) {
+                        const formatted = CostCalculator.formatCostDisplay(costInfo);
+                        console.log("💰 API Cost:", formatted.detailed);
+                    }
+                }
+
                 // Check if the response has the expected structure
                 if (!data.choices || !data.choices[0] || !data.choices[0].message) {
                     console.error("Unexpected API response structure:", data);
@@ -87,7 +98,11 @@ ${request.text}
                 }
 
                 console.log("Sending response with flashcards:", flashcards);
-                sendResponse({ success: true, flashcards });
+                sendResponse({ 
+                    success: true, 
+                    flashcards,
+                    costInfo: costInfo 
+                });
 
             } catch (err) {
                 console.error("Background script error:", err);

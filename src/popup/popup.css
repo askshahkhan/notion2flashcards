@@ -83,6 +83,15 @@ h2 {
     font-weight: 400;
 }
 
+#status[style*="color: rgb(46, 170, 220)"] {
+    background-color: #f0f9ff;
+    border: 1px solid #2eaadc;
+    border-radius: 6px;
+    padding: 8px 12px;
+    margin: 12px auto;
+    font-weight: 500;
+}
+
 /* =============================================================================
    BUTTONS
    ============================================================================= */

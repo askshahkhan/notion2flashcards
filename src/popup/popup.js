@@ -73,7 +73,9 @@ document.getElementById("fetchButton").addEventListener("click", async () => {
     // Keep showing spinner for flashcard generation (no need to update message)
     
     // Generate flashcards using the service
-    const cards = await generateFlashcards(notionText);
+    const result = await generateFlashcards(notionText);
+    const cards = result.flashcards || result; // Handle both old and new response formats
+    const costInfo = result.costInfo;
     
     // Display flashcards
     uiController.displayFlashcards(cards, () => {
@@ -81,6 +83,11 @@ document.getElementById("fetchButton").addEventListener("click", async () => {
       const exportButton = document.getElementById("exportButton");
       exportButton.disabled = false;
       exportButton.style.opacity = "1";
+      
+      // Show cost information
+      if (costInfo) {
+        uiController.showCostInfo(costInfo);
+      }
       
       // Panel expansion is already handled by showLoadingSpinner
     });

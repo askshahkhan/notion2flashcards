@@ -16,6 +16,7 @@ export function generateFlashcards(text) {
         
         if (response && response.success) {
           const cards = response.flashcards;
+          const costInfo = response.costInfo;
           console.log("Generated flashcards:", cards);
           
           if (!cards || !cards.length) {
@@ -23,7 +24,7 @@ export function generateFlashcards(text) {
             return;
           }
           
-          resolve(cards);
+          resolve({ flashcards: cards, costInfo: costInfo });
         } else {
           reject(new Error("OpenAI failed: " + (response?.error || "Unknown error")));
         }

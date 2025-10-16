@@ -40,6 +40,129 @@ body {
 }
 
 /* =============================================================================
+   OAUTH COMPONENTS
+   ============================================================================= */
+/* Auth Status Indicator */
+.auth-status {
+    margin-bottom: 16px;
+    width: 100%;
+}
+
+.auth-indicator {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.auth-indicator.connected {
+    background-color: #f0f9ff;
+    border: 1px solid #2eaadc;
+    color: #1e40af;
+}
+
+.auth-indicator.disconnected {
+    background-color: #fef2f2;
+    border: 1px solid #fca5a5;
+    color: #dc2626;
+}
+
+.auth-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.auth-indicator.connected .auth-dot {
+    background-color: #10b981;
+}
+
+.auth-indicator.disconnected .auth-dot {
+    background-color: #ef4444;
+}
+
+/* OAuth Controls */
+.oauth-controls {
+    margin-bottom: 16px;
+    width: 100%;
+}
+
+.connect-btn {
+    background-color: #2563eb;
+    color: white;
+    border: 1px solid #2563eb;
+    width: 100%;
+    justify-content: center;
+}
+
+.connect-btn:hover {
+    background-color: #1d4ed8;
+    border-color: #1d4ed8;
+}
+
+.logout-btn {
+    background-color: #dc2626;
+    color: white;
+    border: 1px solid #dc2626;
+    width: 100%;
+    justify-content: center;
+}
+
+.logout-btn:hover {
+    background-color: #b91c1c;
+    border-color: #b91c1c;
+}
+
+/* Page URL Input Section */
+.page-input-section {
+    margin-bottom: 16px;
+    width: 100%;
+}
+
+.page-input-section label {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    color: #374151;
+}
+
+.page-url-input {
+    width: 100%;
+    padding: 8px 12px;
+    font-size: 14px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    background-color: #ffffff;
+    color: #374151;
+    box-sizing: border-box;
+    transition: border-color 0.2s ease;
+}
+
+.page-url-input:focus {
+    outline: none;
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.page-url-input:invalid {
+    border-color: #ef4444;
+}
+
+.url-help {
+    display: block;
+    margin-top: 4px;
+    font-size: 12px;
+    color: #6b7280;
+    line-height: 1.4;
+}
+
+/* =============================================================================
    NAVBAR BUTTONS
    ============================================================================= */
 .button-navbar {

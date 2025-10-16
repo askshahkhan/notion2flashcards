@@ -16,7 +16,7 @@ function extractTextFromBlock(block) {
 }
 
 // Recursively fetch Notion page blocks
-async function fetchBlocksRecursive(blockId, allText = [], onProgress = null) {
+async function fetchBlocksRecursive(blockId, allText = [], onProgress = null, accessToken = null) {
   let url = `https://api.notion.com/v1/blocks/${blockId}/children`;
   let hasMore = true;
   let startCursor = null;
@@ -26,10 +26,11 @@ async function fetchBlocksRecursive(blockId, allText = [], onProgress = null) {
     const query = startCursor ? `?start_cursor=${startCursor}` : "";
     console.log(`Fetching Notion blocks from: ${url}${query}`);
     
+    const token = accessToken || NOTION_API_KEY;
     const response = await fetch(url + query, {
       method: "GET",
       headers: {
-        "Authorization": `Bearer ${NOTION_API_KEY}`,
+        "Authorization": `Bearer ${token}`,
         "Notion-Version": "2022-06-28",
         "Content-Type": "application/json"
       }
@@ -64,7 +65,7 @@ async function fetchBlocksRecursive(blockId, allText = [], onProgress = null) {
       }
       
       if (block.has_children) {
-        await fetchBlocksRecursive(block.id, allText, onProgress);
+        await fetchBlocksRecursive(block.id, allText, onProgress, accessToken);
       }
     }
 
@@ -77,9 +78,13 @@ async function fetchBlocksRecursive(blockId, allText = [], onProgress = null) {
 }
 
 // Main function to fetch all content from Notion page
-export async function fetchNotionContent(onProgress = null) {
-  console.log("Starting Notion fetch for page ID:", NOTION_PAGE_ID);
-  const allText = await fetchBlocksRecursive(NOTION_PAGE_ID, [], onProgress);
+export async function fetchNotionContent(onProgress = null, accessToken = null, pageId = null) {
+  // Use provided parameters or fall back to hardcoded values
+  const token = accessToken || NOTION_API_KEY;
+  const targetPageId = pageId || NOTION_PAGE_ID;
+  
+  console.log("Starting Notion fetch for page ID:", targetPageId);
+  const allText = await fetchBlocksRecursive(targetPageId, [], onProgress, token);
   const notionText = allText.join("\n\n");
   
   console.log("Extracted text length:", notionText.length);

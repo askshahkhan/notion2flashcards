@@ -3,17 +3,19 @@
   "name": "Notion Flashcards",
   "version": "0.1",
   "description": "Generate flashcards from Notion pages using GPT-4",
-  "permissions": ["storage", "activeTab"],
+  "permissions": ["storage", "activeTab", "identity", "tabs"],
   "host_permissions": [
     "https://api.notion.com/*",
-    "https://api.openai.com/*"
+    "https://www.notion.so/*",
+    "https://api.openai.com/*",
+    "https://mkdjckjdkeconibpdkdhpoknmpoeabbp.chromiumapp.org/*"
   ],
   "background": {
     "service_worker": "src/background.js",
     "type": "module"
   },
   "content_security_policy": {
-    "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'"
+    "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'; connect-src 'self' https://api.notion.com https://www.notion.so https://api.openai.com https://mkdjckjdkeconibpdkdhpoknmpoeabbp.chromiumapp.org"
   },
   "content_scripts": [
     {

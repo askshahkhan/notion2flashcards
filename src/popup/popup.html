@@ -15,8 +15,38 @@
   <div class="container">
     <img src="/assets/logo.png" alt="Logo" class="logo">
 
+    <!-- OAuth Status Section -->
+    <div id="authStatus" class="auth-status">
+      <div id="authIndicator" class="auth-indicator disconnected">
+        <span class="auth-dot"></span>
+        <span id="authText">Not connected to Notion</span>
+      </div>
+    </div>
+
+    <!-- OAuth Controls -->
+    <div id="oauthControls" class="oauth-controls">
+      <button id="connectButton" class="connect-btn">
+        Connect to Notion
+      </button>
+      <button id="logoutButton" class="logout-btn" style="display: none;">
+        Logout
+      </button>
+    </div>
+
+    <!-- Page URL Input (shown when authenticated) -->
+    <div id="pageInputSection" class="page-input-section" style="display: none;">
+      <label for="notionPageUrl">Notion Page URL:</label>
+      <input 
+        type="url" 
+        id="notionPageUrl" 
+        placeholder="https://www.notion.so/your-page-url"
+        class="page-url-input"
+      >
+      <small class="url-help">Paste the URL of the Notion page you want to generate flashcards from</small>
+    </div>
+
     <div class="button-navbar">
-      <button id="fetchButton">
+      <button id="fetchButton" disabled>
         Generate Flashcards
       </button>
       <button id="exportButton">

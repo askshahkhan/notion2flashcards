@@ -1,4 +1,4 @@
-import { fetchNotionContent } from '../services/notion-api.js';
+import { fetchNotionContent, fetchAvailablePages } from '../services/notion-api.js';
 import { generateFlashcards } from '../services/flashcard-generator.js';
 import { exportFlashcards } from '../services/apkg-exporter.js';
 import { UIController } from '../components/ui-controller.js';
@@ -7,6 +7,117 @@ import { USE_OAUTH } from '../../secrets.js';
 
 // Initialize UI controller
 const uiController = new UIController();
+
+// Current page information
+let currentPageInfo = null;
+// Available pages from Notion
+let availablePages = [];
+
+// Get current page information from content script
+async function getCurrentPageInfo() {
+  return new Promise((resolve) => {
+    // Check if we're in an iframe (overlay mode)
+    if (window.parent && window.parent !== window) {
+      // Request page info from parent window
+      window.parent.postMessage({ action: "getCurrentPageInfo" }, "*");
+      
+      // Listen for response
+      const messageHandler = (event) => {
+        if (event.data && event.data.action === "currentPageInfo") {
+          window.removeEventListener("message", messageHandler);
+          resolve(event.data.data);
+        }
+      };
+      
+      window.addEventListener("message", messageHandler);
+      
+      // Timeout after 1 second
+      setTimeout(() => {
+        window.removeEventListener("message", messageHandler);
+        resolve({ isNotionPage: false, currentUrl: "", pageId: null });
+      }, 1000);
+    } else {
+      // Fallback for popup mode - try to get current tab info
+      chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+        if (tabs[0]) {
+          const url = tabs[0].url;
+          const isNotionPage = url.includes('notion.so') || url.includes('notion.site');
+          let pageId = null;
+          
+          if (isNotionPage) {
+            try {
+              pageId = notionOAuth.extractPageIdFromUrl(url);
+            } catch (error) {
+              console.error('Error extracting page ID:', error);
+            }
+          }
+          
+          resolve({
+            isNotionPage,
+            currentUrl: url,
+            pageId
+          });
+        } else {
+          resolve({ isNotionPage: false, currentUrl: "", pageId: null });
+        }
+      });
+    }
+  });
+}
+
+// Load available pages from Notion
+async function loadAvailablePages() {
+  try {
+    console.log('Loading available pages...');
+    notionPageDropdown.disabled = true;
+    notionPageDropdown.innerHTML = '<option value="">Loading pages...</option>';
+    refreshPagesButton.disabled = true;
+    
+    const accessToken = await notionOAuth.getAccessToken();
+    if (!accessToken) {
+      throw new Error("No access token available. Please connect to Notion first.");
+    }
+    
+    availablePages = await fetchAvailablePages(accessToken);
+    populateDropdown();
+    
+  } catch (error) {
+    console.error('Error loading pages:', error);
+    notionPageDropdown.innerHTML = '<option value="">Error loading pages</option>';
+    uiController.showError("Failed to load pages: " + error.message);
+  } finally {
+    notionPageDropdown.disabled = false;
+    refreshPagesButton.disabled = false;
+  }
+}
+
+// Populate the dropdown with available pages
+function populateDropdown() {
+  notionPageDropdown.innerHTML = '<option value="">Select a page...</option>';
+  
+  if (availablePages.length === 0) {
+    notionPageDropdown.innerHTML = '<option value="">No pages found</option>';
+    return;
+  }
+  
+  availablePages.forEach(page => {
+    const option = document.createElement('option');
+    option.value = page.id;
+    option.textContent = page.title;
+    option.dataset.url = page.url;
+    notionPageDropdown.appendChild(option);
+  });
+  
+  // Try to auto-select current page if available
+  if (currentPageInfo && currentPageInfo.isNotionPage && currentPageInfo.pageId) {
+    const matchingPage = availablePages.find(page => page.id === currentPageInfo.pageId);
+    if (matchingPage) {
+      notionPageDropdown.value = currentPageInfo.pageId;
+    }
+  }
+  
+  updateFetchButtonState();
+}
 
 // Loading state management
 function showLoadingSpinner() {
@@ -60,7 +171,8 @@ const authText = document.getElementById("authText");
 const connectButton = document.getElementById("connectButton");
 const logoutButton = document.getElementById("logoutButton");
 const pageInputSection = document.getElementById("pageInputSection");
-const notionPageUrlInput = document.getElementById("notionPageUrl");
+const notionPageDropdown = document.getElementById("notionPageDropdown");
+const refreshPagesButton = document.getElementById("refreshPagesButton");
 const fetchButton = document.getElementById("fetchButton");
 
 // Initialize OAuth state
@@ -68,14 +180,28 @@ async function initializeOAuthState() {
   console.log('Initializing OAuth state...');
   console.log('USE_OAUTH:', USE_OAUTH);
   
+  // Get current page information
+  currentPageInfo = await getCurrentPageInfo();
+  console.log('Current page info:', currentPageInfo);
+  
   if (!USE_OAUTH) {
     console.log('OAuth disabled, using fallback mode');
     // Hide OAuth UI and show fallback mode
     document.getElementById("authStatus").style.display = "none";
     document.getElementById("oauthControls").style.display = "none";
     pageInputSection.style.display = "none";
-    fetchButton.disabled = false;
-    fetchButton.style.opacity = "1";
+    
+    // Enable fetch button if on a Notion page
+    if (currentPageInfo.isNotionPage) {
+      fetchButton.disabled = false;
+      fetchButton.style.opacity = "1";
+    } else {
+      fetchButton.disabled = true;
+      fetchButton.style.opacity = "0.5";
+      
+      // Show message to navigate to Notion page
+      uiController.showError("Please navigate to a Notion page to generate flashcards automatically, or use the manual URL input when connected to Notion.");
+    }
     return;
   }
 
@@ -93,8 +219,12 @@ function updateAuthUI(isAuthenticated) {
     authIndicator.className = "auth-indicator connected";
     authText.textContent = "Connected to Notion";
     connectButton.style.display = "none";
-    logoutButton.style.display = "block";
+    logoutButton.style.display = "none"; // Hide logout button when connected
+    
+    // Show page selection section and load available pages
     pageInputSection.style.display = "block";
+    loadAvailablePages();
+    
     updateFetchButtonState();
   } else {
     authIndicator.className = "auth-indicator disconnected";
@@ -110,12 +240,11 @@ function updateAuthUI(isAuthenticated) {
   console.log('Connect button disabled:', connectButton.disabled);
 }
 
-// Update fetch button state based on page URL input
+// Update fetch button state based on page selection
 function updateFetchButtonState() {
-  const url = notionPageUrlInput.value.trim();
-  const isValidUrl = notionOAuth.isValidNotionUrl(url);
+  const selectedPageId = notionPageDropdown.value;
   
-  if (isValidUrl) {
+  if (selectedPageId && selectedPageId.trim() !== "") {
     fetchButton.disabled = false;
     fetchButton.style.opacity = "1";
   } else {
@@ -158,8 +287,13 @@ logoutButton.addEventListener("click", async () => {
   }
 });
 
-// Event listener for page URL input
-notionPageUrlInput.addEventListener("input", updateFetchButtonState);
+// Event listener for page dropdown selection
+notionPageDropdown.addEventListener("change", updateFetchButtonState);
+
+// Event listener for refresh pages button
+refreshPagesButton.addEventListener("click", () => {
+  loadAvailablePages();
+});
 
 // Initialize OAuth state on load
 initializeOAuthState();
@@ -176,22 +310,27 @@ document.getElementById("fetchButton").addEventListener("click", async () => {
     let pageId = null;
 
     if (USE_OAUTH) {
-      // OAuth mode: get token and page ID from user input
+      // OAuth mode: get token and page ID from dropdown selection
       accessToken = await notionOAuth.getAccessToken();
       if (!accessToken) {
         throw new Error("No access token found. Please connect to Notion first.");
       }
 
-      const pageUrl = notionPageUrlInput.value.trim();
-      if (!pageUrl) {
-        throw new Error("Please enter a Notion page URL.");
+      // Use selected page ID from dropdown
+      pageId = notionPageDropdown.value;
+      if (!pageId || pageId.trim() === "") {
+        throw new Error("Please select a Notion page from the dropdown.");
       }
-
-      pageId = notionOAuth.extractPageIdFromUrl(pageUrl);
-      console.log("Using OAuth token and page ID:", pageId);
+      console.log("Using selected page ID:", pageId);
     } else {
       // Fallback mode: use hardcoded credentials
       console.log("Using fallback hardcoded credentials");
+      
+      // Use auto-detected page ID if available
+      if (currentPageInfo && currentPageInfo.isNotionPage && currentPageInfo.pageId) {
+        pageId = currentPageInfo.pageId;
+        console.log("Using auto-detected page ID in fallback mode:", pageId);
+      }
     }
 
     // Fetch content from Notion

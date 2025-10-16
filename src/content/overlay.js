@@ -3,6 +3,46 @@
   const OVERLAY_ID = "anki-ai-overlay-root";
   if (document.getElementById(OVERLAY_ID)) return; // Avoid duplicates
 
+  // Check if current page is a Notion page
+  function isNotionPage() {
+    return window.location.hostname.includes('notion.so') || 
+           window.location.hostname.includes('notion.site');
+  }
+
+  // Extract page ID from current Notion page URL
+  function getCurrentNotionPageId() {
+    if (!isNotionPage()) return null;
+    
+    try {
+      const url = window.location.href;
+      const patterns = [
+        /notion\.so\/[^\/]*-([a-f0-9]{32})/,  // https://www.notion.so/Page-Title-267ad5f651558081a9fdfa77fd4da2c5
+        /notion\.so\/([a-f0-9]{32})/,         // https://notion.so/267ad5f651558081a9fdfa77fd4da2c5
+        /notion\.so\/[^\/]*\/([a-f0-9]{32})/, // https://www.notion.so/workspace/267ad5f651558081a9fdfa77fd4da2c5
+      ];
+
+      for (const pattern of patterns) {
+        const match = url.match(pattern);
+        if (match) {
+          return match[1];
+        }
+      }
+      return null;
+    } catch (error) {
+      console.error('Error extracting page ID from current URL:', error);
+      return null;
+    }
+  }
+
+  // Get current page info
+  function getCurrentPageInfo() {
+    return {
+      isNotionPage: isNotionPage(),
+      currentUrl: window.location.href,
+      pageId: getCurrentNotionPageId()
+    };
+  }
+
   // Create host container
   const host = document.createElement("div");
   host.id = OVERLAY_ID;
@@ -41,7 +81,7 @@
     .panel {
       margin-top: 25px;
       display: none;
-      width: 350px; height: 200px;
+      width: 350px; height: 450px;
       background: #ffffff;
       border: 1px solid #e5e7eb;
       border-radius: 40px;
@@ -99,6 +139,15 @@
   window.addEventListener("message", (e) => {
     if (e.data && e.data.action === "expandPanel") {
       panel.classList.add("expanded");
+    }
+    
+    // Handle requests for current page info
+    if (e.data && e.data.action === "getCurrentPageInfo") {
+      const pageInfo = getCurrentPageInfo();
+      e.source.postMessage({
+        action: "currentPageInfo",
+        data: pageInfo
+      }, "*");
     }
   });
 

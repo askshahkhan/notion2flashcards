@@ -77,6 +77,58 @@ async function fetchBlocksRecursive(blockId, allText = [], onProgress = null, ac
   return allText;
 }
 
+// Fetch available pages from Notion using search API
+export async function fetchAvailablePages(accessToken = null) {
+  const token = accessToken || NOTION_API_KEY;
+  
+  if (!token) {
+    throw new Error("No access token available. Please connect to Notion first.");
+  }
+  
+  console.log("Fetching available pages from Notion...");
+  
+  const searchUrl = "https://api.notion.com/v1/search";
+  
+  const response = await fetch(searchUrl, {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${token}`,
+      "Notion-Version": "2022-06-28",
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      filter: {
+        value: "page",
+        property: "object"
+      },
+      page_size: 100 // Maximum allowed by Notion API
+    })
+  });
+
+  if (!response.ok) {
+    const errorData = await response.text();
+    console.error("Notion search API error:", errorData);
+    throw new Error(`Notion search API request failed: ${response.status} - ${errorData}`);
+  }
+
+  const data = await response.json();
+  console.log("Notion search API response:", data);
+  
+  // Extract page information and format for dropdown
+  const pages = data.results.map(page => ({
+    id: page.id,
+    title: page.properties?.title?.title?.[0]?.plain_text || 
+           page.properties?.Name?.title?.[0]?.plain_text || 
+           'Untitled Page',
+    url: page.url,
+    created_time: page.created_time,
+    last_edited_time: page.last_edited_time
+  })).sort((a, b) => new Date(b.last_edited_time) - new Date(a.last_edited_time)); // Sort by most recent first
+  
+  console.log("Extracted pages:", pages);
+  return pages;
+}
+
 // Main function to fetch all content from Notion page
 export async function fetchNotionContent(onProgress = null, accessToken = null, pageId = null) {
   // Use provided parameters or fall back to hardcoded values

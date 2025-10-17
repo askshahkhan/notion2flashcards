@@ -214,6 +214,8 @@ async function initializeOAuthState() {
 // Update OAuth UI based on authentication status
 function updateAuthUI(isAuthenticated) {
   console.log('Updating auth UI, isAuthenticated:', isAuthenticated);
+
+  authText.style.display = "none";
   
   if (isAuthenticated) {
     authIndicator.className = "auth-indicator connected";
@@ -228,7 +230,7 @@ function updateAuthUI(isAuthenticated) {
     updateFetchButtonState();
   } else {
     authIndicator.className = "auth-indicator disconnected";
-    authText.textContent = "Not connected to Notion";
+    authText.textContent = "Notion connected";
     connectButton.style.display = "block";
     logoutButton.style.display = "none";
     pageInputSection.style.display = "none";

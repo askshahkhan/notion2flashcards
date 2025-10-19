@@ -336,7 +336,10 @@ class NotionOAuth {
                 console.log('✅ Calling saveUserEmail...');
                 const result = await saveUserEmail(userEmail, notionUserId);
                 console.log('📊 Save result:', result);
-                
+
+                // Store email locally for quick access
+                await chrome.storage.local.set({ user_email: userEmail });
+                console.log('✅ Email stored in local storage:', userEmail);
             } else {
                 console.log('❌ No email found in userData');
             }

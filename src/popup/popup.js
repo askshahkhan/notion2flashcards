@@ -4,6 +4,7 @@ import { exportFlashcards } from '../services/apkg-exporter.js';
 import { UIController } from '../components/ui-controller.js';
 import { notionOAuth } from '../services/notion-oauth.js';
 import { USE_OAUTH } from '../../secrets.js';
+import { incrementGenerations } from '../services/supabase-client.js';
 
 // Initialize UI controller
 const uiController = new UIController();
@@ -372,9 +373,15 @@ document.getElementById("fetchButton").addEventListener("click", async () => {
       if (costInfo) {
         uiController.showCostInfo(costInfo);
       }
-      
+    
       // Panel expansion is already handled by showLoadingSpinner
     });
+
+    const { user_email } = await chrome.storage.local.get(['user_email']);
+    if (user_email) {
+      console.log('🔍 INCREMENT GENERATIONS for user email:', user_email);
+      await incrementGenerations(user_email);
+    }
   } catch (err) {
     console.error(err);
     uiController.showError(err.message || "Failed to generate flashcards.");

@@ -75,3 +75,35 @@ export async function saveUserEmail(email, notionUserId) {
     return { success: false, error: error.message };
   }
 }
+
+/**
+ * Increment generation counter for user
+ */
+export async function incrementGenerations(email) {
+    try {
+      console.log('🔵 Incrementing generations for:', email);
+      
+      const response = await fetch(`${supabaseClient.url}/rest/v1/rpc/increment_generations`, {
+        method: 'POST',
+        headers: {
+          'apikey': supabaseClient.key,
+          'Authorization': `Bearer ${supabaseClient.key}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ user_email: email })
+      });
+      
+      if (!response.ok) {
+        const error = await response.text();
+        console.error('❌ Failed to increment:', error);
+        return { success: false };
+      }
+      
+      console.log('✅ Generation counter incremented');
+      return { success: true };
+      
+    } catch (error) {
+      console.error('❌ Error incrementing generations:', error);
+      return { success: false };
+    }
+  }

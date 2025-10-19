@@ -80,30 +80,65 @@ export async function saveUserEmail(email, notionUserId) {
  * Increment generation counter for user
  */
 export async function incrementGenerations(email) {
-    try {
-      console.log('🔵 Incrementing generations for:', email);
-      
-      const response = await fetch(`${supabaseClient.url}/rest/v1/rpc/increment_generations`, {
-        method: 'POST',
-        headers: {
-          'apikey': supabaseClient.key,
-          'Authorization': `Bearer ${supabaseClient.key}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ user_email: email })
-      });
-      
-      if (!response.ok) {
-        const error = await response.text();
-        console.error('❌ Failed to increment:', error);
-        return { success: false };
-      }
-      
-      console.log('✅ Generation counter incremented');
-      return { success: true };
-      
-    } catch (error) {
-      console.error('❌ Error incrementing generations:', error);
+  try {
+    console.log('🔵 Incrementing generations for:', email);
+    
+    const response = await fetch(`${supabaseClient.url}/rest/v1/rpc/increment_generations`, {
+      method: 'POST',
+      headers: {
+        'apikey': supabaseClient.key,
+        'Authorization': `Bearer ${supabaseClient.key}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ user_email: email })
+    });
+    
+    if (!response.ok) {
+      const error = await response.text();
+      console.error('❌ Failed to increment:', error);
       return { success: false };
     }
+    
+    console.log('✅ Generation counter incremented');
+    return { success: true };
+    
+  } catch (error) {
+    console.error('❌ Error incrementing generations:', error);
+    return { success: false };
   }
+}
+
+/**
+ * Track unique page for user
+ */
+export async function trackPageAccess(email, pageId) {
+  try {
+    console.log('🔵 Tracking page for:', email);
+    
+    const response = await fetch(`${supabaseClient.url}/rest/v1/rpc/track_unique_page`, {
+      method: 'POST',
+      headers: {
+        'apikey': supabaseClient.key,
+        'Authorization': `Bearer ${supabaseClient.key}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        p_user_email: email,
+        p_page_id: pageId
+      })
+    });
+    
+    if (!response.ok) {
+      const error = await response.text();
+      console.error('❌ Failed to track page:', error);
+      return { success: false };
+    }
+    
+    console.log('✅ Unique page tracked');
+    return { success: true };
+    
+  } catch (error) {
+    console.error('❌ Error tracking page:', error);
+    return { success: false };
+  }
+}

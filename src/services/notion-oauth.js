@@ -337,13 +337,6 @@ class NotionOAuth {
                 const result = await saveUserEmail(userEmail, notionUserId);
                 console.log('📊 Save result:', result);
                 
-                if (result.success) {
-                    // Mark as saved so we don't do this every time
-                    await chrome.storage.local.set({ user_info_saved: true });
-                    console.log('✅ Marked as saved in storage');
-                } else {
-                    console.error('❌ Save failed:', result.error);
-                }
             } else {
                 console.log('❌ No email found in userData');
             }

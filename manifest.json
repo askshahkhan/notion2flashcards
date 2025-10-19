@@ -8,14 +8,15 @@
     "https://api.notion.com/*",
     "https://www.notion.so/*",
     "https://api.openai.com/*",
-    "https://mkdjckjdkeconibpdkdhpoknmpoeabbp.chromiumapp.org/*"
+    "https://mkdjckjdkeconibpdkdhpoknmpoeabbp.chromiumapp.org/*",
+    "https://ecshzdgyoduuwaftjppg.supabase.co/*"
   ],
   "background": {
     "service_worker": "src/background.js",
     "type": "module"
   },
   "content_security_policy": {
-    "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'; connect-src 'self' https://api.notion.com https://www.notion.so https://api.openai.com https://mkdjckjdkeconibpdkdhpoknmpoeabbp.chromiumapp.org"
+    "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'; connect-src 'self' https://api.notion.com https://www.notion.so https://api.openai.com https://mkdjckjdkeconibpdkdhpoknmpoeabbp.chromiumapp.org https://ecshzdgyoduuwaftjppg.supabase.co"
   },
   "content_scripts": [
     {

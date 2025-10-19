@@ -1,4 +1,6 @@
 import { NOTION_OAUTH_CLIENT_ID, NOTION_OAUTH_CLIENT_SECRET } from '../../secrets.js';
+import { saveUserEmail } from '../services/supabase-client.js';
+
 
 const REDIRECT_URI = 'https://mkdjckjdkeconibpdkdhpoknmpoeabbp.chromiumapp.org';
 const TOKEN_STORAGE_KEY = 'notion_access_token';
@@ -139,21 +141,38 @@ class NotionOAuth {
                     redirect_uri: REDIRECT_URI
                 })
             });
-
+    
             if (!response.ok) {
                 const errorText = await response.text();
                 throw new Error(`Token exchange failed: ${response.status} - ${errorText}`);
             }
-
+    
             const tokenData = await response.json();
             
             if (!tokenData.access_token) {
                 throw new Error('No access token in response');
             }
-
+    
             console.log('Access token obtained successfully');
-            return tokenData.access_token;
+            console.log('🔍 Full tokenData:', tokenData);
+            
+            // NEW: Save user email to Supabase
+            const userEmail = tokenData.owner?.user?.person?.email;
+            const notionUserId = tokenData.owner?.user?.id;
 
+            console.log('🔍 Extracted email:', userEmail);
+            console.log('🔍 Extracted notion user ID:', notionUserId);
+            
+            if (userEmail) {
+                console.log('✅ Email found, saving to Supabase...');
+                const result = await saveUserEmail(userEmail, notionUserId);
+                console.log('📊 Supabase save result:', result);
+            } else {
+                console.log('❌ No email found in tokenData');
+            }
+    
+            return tokenData.access_token;
+    
         } catch (error) {
             console.error('Token exchange failed:', error);
             throw error;
@@ -262,6 +281,75 @@ class NotionOAuth {
             return true;
         } catch (error) {
             return false;
+        }
+    }
+
+    /**
+     * Save user info if we haven't already (for already-authenticated users)
+     */
+    /**
+     * Save user info if we haven't already (for already-authenticated users)
+     */
+    async saveUserInfoIfNeeded() {
+        try {
+            // Check if we've already saved this user
+            const saved = await chrome.storage.local.get(['user_info_saved']);
+            if (saved.user_info_saved) {
+                console.log('User info already saved to Supabase');
+                return;
+            }
+
+            // Get current access token
+            const accessToken = await this.getAccessToken();
+            if (!accessToken) return;
+
+            // Fetch user info from Notion API
+            const response = await fetch('https://api.notion.com/v1/users/me', {
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`,
+                    'Notion-Version': '2022-06-28'
+                }
+            });
+
+            if (!response.ok) {
+                console.error('Failed to fetch user info');
+                return;
+            }
+
+            const userData = await response.json();
+            console.log('🔍 User data from Notion:', userData);
+
+            // Fix: Check both possible paths for email
+            let userEmail = userData.person?.email;
+            let notionUserId = userData.id;
+            
+            // If it's a bot response, get the owner's email
+            if (!userEmail && userData.bot?.owner?.user?.person?.email) {
+                userEmail = userData.bot.owner.user.person.email;
+                notionUserId = userData.bot.owner.user.id;
+            }
+
+            console.log('🔍 Extracted email:', userEmail);
+            console.log('🔍 Extracted notion user ID:', notionUserId);
+
+            if (userEmail) {
+                console.log('✅ Calling saveUserEmail...');
+                const result = await saveUserEmail(userEmail, notionUserId);
+                console.log('📊 Save result:', result);
+                
+                if (result.success) {
+                    // Mark as saved so we don't do this every time
+                    await chrome.storage.local.set({ user_info_saved: true });
+                    console.log('✅ Marked as saved in storage');
+                } else {
+                    console.error('❌ Save failed:', result.error);
+                }
+            } else {
+                console.log('❌ No email found in userData');
+            }
+
+        } catch (error) {
+            console.error('❌ Error saving user info:', error);
         }
     }
 }

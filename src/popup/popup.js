@@ -208,6 +208,11 @@ async function initializeOAuthState() {
   console.log('OAuth enabled, checking authentication status...');
   const isAuthenticated = await notionOAuth.isAuthenticated();
   console.log('Is authenticated:', isAuthenticated);
+  if (isAuthenticated) {
+    console.log('Saving user info to Supabase...');
+    await notionOAuth.saveUserInfoIfNeeded();
+    console.log('User info saved to Supabase');
+  }
   updateAuthUI(isAuthenticated);
 }
 

@@ -98,15 +98,18 @@ export async function saveUserEmail(email, notionUserId) {
 }
 
 /**
- * Increment generation counter for user
+ * Increment generation counter for user and add cost
  */
-export async function incrementGenerations(email) {
+export async function incrementGenerations(email, cost = 0) {
   try {
-    console.log('🔢 Incrementing generations for:', email);
+    console.log('🔢 Incrementing generations for:', email, 'Cost:', cost);
     
-    await supabaseClient.rpc('increment_generations', { user_email: email });
+    await supabaseClient.rpc('increment_generations', { 
+      user_email: email,
+      generation_cost: cost 
+    });
     
-    console.log('✅ Generation counter incremented');
+    console.log('✅ Generation counter incremented, cost added:', cost);
     return { success: true };
     
   } catch (error) {

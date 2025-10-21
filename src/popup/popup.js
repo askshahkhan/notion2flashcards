@@ -390,7 +390,9 @@ document.getElementById("fetchButton").addEventListener("click", async () => {
     const { user_email } = await chrome.storage.local.get(['user_email']);
     if (user_email) {
       console.log('🔍 INCREMENT GENERATIONS for user email:', user_email);
-      await incrementGenerations(user_email);
+      const cost = costInfo?.totalCost || 0;
+      console.log('💰 Generation cost:', cost);
+      await incrementGenerations(user_email, cost);
     }
   } catch (err) {
     console.error(err);

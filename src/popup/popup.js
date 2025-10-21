@@ -4,7 +4,7 @@ import { exportFlashcards } from '../services/apkg-exporter.js';
 import { UIController } from '../components/ui-controller.js';
 import { notionOAuth } from '../services/notion-oauth.js';
 import { USE_OAUTH } from '../../secrets.js';
-import { incrementGenerations, trackPageAccess, updateAccessiblePages } from '../services/supabase-client.js';
+import { incrementGenerations, incrementAnkiExports, updateAccessiblePages } from '../services/supabase-client.js';
 
 // Initialize UI controller
 const uiController = new UIController();
@@ -340,10 +340,6 @@ document.getElementById("fetchButton").addEventListener("click", async () => {
         throw new Error("Please select a Notion page from the dropdown.");
       }
       console.log("Using selected page ID:", pageId);
-      const { user_email } = await chrome.storage.local.get(['user_email']);
-      if (user_email && pageId) {
-        await trackPageAccess(user_email, pageId);
-      }
     } else {
       // Fallback mode: use hardcoded credentials
       console.log("Using fallback hardcoded credentials");
@@ -423,6 +419,13 @@ async function handleExportToAnki(button) {
     
     if (result.success) {
       uiController.showExportSuccess(button, originalText, result.filename);
+
+      // 🆕 Track the Anki export in Supabase
+      const { user_email } = await chrome.storage.local.get(['user_email']);
+      if (user_email) {
+        console.log('📦 Tracking Anki export for user:', user_email);
+        await incrementAnkiExports(user_email);
+      }
     } else {
       throw new Error(result.error);
     }

@@ -1,46 +1,71 @@
 // supabase-client.js
-// Create this new file in your services folder
+// Refactored version with better code organization
 
-// Import Supabase URL and key from secrets
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from '../../secrets.js';
 
-// Simple Supabase client without external dependencies
+// Core Supabase client with unified request handling
 const supabaseClient = {
   url: SUPABASE_URL,
   key: SUPABASE_ANON_KEY,
   
-  async query(table, method, data) {
-    console.log('🔵 Making request to:', `${this.url}/rest/v1/${table}`);
-    console.log('🔵 Method:', method);
-    console.log('🔵 Data:', data);
+  /**
+   * Make a REST API request to a table
+   */
+  async request(endpoint, method, body = null, options = {}) {
+    const url = `${this.url}/rest/v1/${endpoint}`;
+    console.log(`🔵 ${method} ${url}`, body);
     
-    const response = await fetch(`${this.url}/rest/v1/${table}`, {
-      method: method,
+    const fetchOptions = {
+      method,
       headers: {
         'apikey': this.key,
         'Authorization': `Bearer ${this.key}`,
         'Content-Type': 'application/json',
-        'Prefer': 'resolution=merge-duplicates,return=representation'
-      },
-      body: JSON.stringify(data)
-    });
+        ...options.headers
+      }
+    };
     
-    console.log('🔵 Response status:', response.status);
-    console.log('🔵 Response ok:', response.ok);
+    if (body) {
+      fetchOptions.body = JSON.stringify(body);
+    }
     
+    const response = await fetch(url, fetchOptions);
     const responseText = await response.text();
-    console.log('🔵 Response text:', responseText);
+    
+    console.log(`🔵 Response (${response.status}):`, responseText);
     
     if (!response.ok) {
       throw new Error(`Supabase error (${response.status}): ${responseText}`);
     }
     
-    // If response is empty, return empty object
-    if (!responseText || responseText.trim() === '') {
-      return {};
-    }
-    
-    return JSON.parse(responseText);
+    // Return parsed JSON or empty object if no content
+    return responseText.trim() ? JSON.parse(responseText) : {};
+  },
+  
+  /**
+   * Call a Supabase RPC function
+   */
+  async rpc(functionName, params) {
+    return this.request(`rpc/${functionName}`, 'POST', params);
+  },
+  
+  /**
+   * Insert data into a table
+   */
+  async insert(table, data) {
+    return this.request(table, 'POST', data, {
+      headers: { 'Prefer': 'resolution=merge-duplicates,return=representation' }
+    });
+  },
+  
+  /**
+   * Update data in a table with filter
+   */
+  async update(table, filter, data) {
+    const endpoint = `${table}?${filter}`;
+    return this.request(endpoint, 'PATCH', data, {
+      headers: { 'Prefer': 'return=representation' }
+    });
   }
 };
 
@@ -49,29 +74,25 @@ const supabaseClient = {
  */
 export async function saveUserEmail(email, notionUserId) {
   try {
-    console.log('🔵 saveUserEmail called with:', { email, notionUserId });
-    console.log('🔵 Supabase URL:', supabaseClient.url);
-    console.log('🔵 API Key exists:', !!supabaseClient.key);
+    console.log('📧 Saving user email:', { email, notionUserId });
     
-    const data = await supabaseClient.query('user_emails', 'POST', {
-      email: email,
+    const data = await supabaseClient.insert('user_emails', {
+      email,
       notion_user_id: notionUserId,
       updated_at: new Date().toISOString()
     });
 
-    console.log('✅ User email saved to Supabase:', email);
-    console.log('✅ Response data:', data);
+    console.log('✅ User email saved:', email);
     return { success: true, data };
     
   } catch (error) {
-    // Check if it's a duplicate key error (email already exists)
+    // Handle duplicate key error (email already exists)
     if (error.message.includes('23505') || error.message.includes('already exists')) {
-      console.log('ℹ️ Email already exists in Supabase, skipping...');
+      console.log('ℹ️ Email already exists, skipping...');
       return { success: true, data: { message: 'Email already exists' } };
     }
     
-    console.error('❌ Error saving to Supabase:', error);
-    console.error('❌ Error details:', error.message);
+    console.error('❌ Error saving email:', error.message);
     return { success: false, error: error.message };
   }
 }
@@ -81,65 +102,34 @@ export async function saveUserEmail(email, notionUserId) {
  */
 export async function incrementGenerations(email) {
   try {
-    console.log('🔵 Incrementing generations for:', email);
+    console.log('🔢 Incrementing generations for:', email);
     
-    const response = await fetch(`${supabaseClient.url}/rest/v1/rpc/increment_generations`, {
-      method: 'POST',
-      headers: {
-        'apikey': supabaseClient.key,
-        'Authorization': `Bearer ${supabaseClient.key}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ user_email: email })
-    });
-    
-    if (!response.ok) {
-      const error = await response.text();
-      console.error('❌ Failed to increment:', error);
-      return { success: false };
-    }
+    await supabaseClient.rpc('increment_generations', { user_email: email });
     
     console.log('✅ Generation counter incremented');
     return { success: true };
     
   } catch (error) {
-    console.error('❌ Error incrementing generations:', error);
-    return { success: false };
+    console.error('❌ Error incrementing generations:', error.message);
+    return { success: false, error: error.message };
   }
 }
 
 /**
- * Track unique page for user
+ * Increment Anki exports counter for user
  */
-export async function trackPageAccess(email, pageId) {
+export async function incrementAnkiExports(email) {
   try {
-    console.log('🔵 Tracking page for:', email);
+    console.log('📦 Incrementing Anki exports for:', email);
     
-    const response = await fetch(`${supabaseClient.url}/rest/v1/rpc/track_unique_page`, {
-      method: 'POST',
-      headers: {
-        'apikey': supabaseClient.key,
-        'Authorization': `Bearer ${supabaseClient.key}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        p_user_email: email,
-        p_page_id: pageId
-      })
-    });
+    await supabaseClient.rpc('increment_anki_exports', { user_email: email });
     
-    if (!response.ok) {
-      const error = await response.text();
-      console.error('❌ Failed to track page:', error);
-      return { success: false };
-    }
-    
-    console.log('✅ Unique page tracked');
+    console.log('✅ Anki exports counter incremented');
     return { success: true };
     
   } catch (error) {
-    console.error('❌ Error tracking page:', error);
-    return { success: false };
+    console.error('❌ Error incrementing Anki exports:', error.message);
+    return { success: false, error: error.message };
   }
 }
 
@@ -147,39 +137,20 @@ export async function trackPageAccess(email, pageId) {
  * Update total accessible pages count
  */
 export async function updateAccessiblePages(email, pageCount) {
-    try {
-      console.log('🔵 Updating accessible pages count:', { email, pageCount });
-      
-      const response = await fetch(
-        `${supabaseClient.url}/rest/v1/user_emails?email=eq.${encodeURIComponent(email)}`,
-        {
-          method: 'PATCH',
-          headers: {
-            'apikey': supabaseClient.key,
-            'Authorization': `Bearer ${supabaseClient.key}`,
-            'Content-Type': 'application/json',
-            'Prefer': 'return=representation'
-          },
-          body: JSON.stringify({
-            accessible_pages: pageCount,  // ✅ Changed from unique_pages
-            updated_at: new Date().toISOString()
-          })
-        }
-      );
-      
-      const responseText = await response.text();
-      console.log('🔵 Update response:', responseText);
-      
-      if (!response.ok) {
-        console.error('❌ Failed to update pages:', responseText);
-        return { success: false, error: responseText };
-      }
-      
-      console.log('✅ Accessible pages count updated to:', pageCount);
-      return { success: true };
-      
-    } catch (error) {
-      console.error('❌ Error updating pages:', error);
-      return { success: false, error: error.message };
-    }
+  try {
+    console.log('📊 Updating accessible pages:', { email, pageCount });
+    
+    const filter = `email=eq.${encodeURIComponent(email)}`;
+    await supabaseClient.update('user_emails', filter, {
+      accessible_pages: pageCount,
+      updated_at: new Date().toISOString()
+    });
+    
+    console.log('✅ Accessible pages updated to:', pageCount);
+    return { success: true };
+    
+  } catch (error) {
+    console.error('❌ Error updating accessible pages:', error.message);
+    return { success: false, error: error.message };
   }
+}

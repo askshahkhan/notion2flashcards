@@ -4,7 +4,7 @@ import { exportFlashcards } from '../services/apkg-exporter.js';
 import { UIController } from '../components/ui-controller.js';
 import { notionOAuth } from '../services/notion-oauth.js';
 import { USE_OAUTH } from '../../secrets.js';
-import { incrementGenerations, trackPageAccess } from '../services/supabase-client.js';
+import { incrementGenerations, trackPageAccess, updateAccessiblePages } from '../services/supabase-client.js';
 
 // Initialize UI controller
 const uiController = new UIController();
@@ -81,6 +81,16 @@ async function loadAvailablePages() {
     
     availablePages = await fetchAvailablePages(accessToken);
     populateDropdown();
+    // NEW: Update accessible pages count in Supabase
+    const { user_email } = await chrome.storage.local.get(['user_email']);
+    if (user_email && availablePages.length > 0) {
+      console.log('📊 Calling updateAccessiblePages...');
+      const result = await updateAccessiblePages(user_email, availablePages.length);
+      console.log('📊 Update result:', result);
+    }
+    else {
+      console.log('❌ Not updating - user_email:', user_email, 'pages:', availablePages.length);
+    }
     
   } catch (error) {
     console.error('Error loading pages:', error);

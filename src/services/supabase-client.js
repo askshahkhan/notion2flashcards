@@ -142,3 +142,44 @@ export async function trackPageAccess(email, pageId) {
     return { success: false };
   }
 }
+
+/**
+ * Update total accessible pages count
+ */
+export async function updateAccessiblePages(email, pageCount) {
+    try {
+      console.log('🔵 Updating accessible pages count:', { email, pageCount });
+      
+      const response = await fetch(
+        `${supabaseClient.url}/rest/v1/user_emails?email=eq.${encodeURIComponent(email)}`,
+        {
+          method: 'PATCH',
+          headers: {
+            'apikey': supabaseClient.key,
+            'Authorization': `Bearer ${supabaseClient.key}`,
+            'Content-Type': 'application/json',
+            'Prefer': 'return=representation'
+          },
+          body: JSON.stringify({
+            accessible_pages: pageCount,  // ✅ Changed from unique_pages
+            updated_at: new Date().toISOString()
+          })
+        }
+      );
+      
+      const responseText = await response.text();
+      console.log('🔵 Update response:', responseText);
+      
+      if (!response.ok) {
+        console.error('❌ Failed to update pages:', responseText);
+        return { success: false, error: responseText };
+      }
+      
+      console.log('✅ Accessible pages count updated to:', pageCount);
+      return { success: true };
+      
+    } catch (error) {
+      console.error('❌ Error updating pages:', error);
+      return { success: false, error: error.message };
+    }
+  }

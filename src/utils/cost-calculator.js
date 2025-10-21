@@ -1,11 +1,11 @@
 // OpenAI API cost calculator utility
-// Pricing as of 2024 (prices may change - check https://openai.com/pricing)
+// Pricing as of October 2025 (prices may change - check https://openai.com/pricing)
 
 export class CostCalculator {
   static PRICING = {
     'gpt-3.5-turbo': {
-      input: 0.001,    // $0.001 per 1K tokens
-      output: 0.002    // $0.002 per 1K tokens
+      input: 0.0005,   // $0.0005 per 1K tokens ($0.50 per 1M)
+      output: 0.0015   // $0.0015 per 1K tokens ($1.50 per 1M)
     },
     'gpt-4': {
       input: 0.03,     // $0.03 per 1K tokens
@@ -14,6 +14,14 @@ export class CostCalculator {
     'gpt-4-turbo': {
       input: 0.01,     // $0.01 per 1K tokens
       output: 0.03     // $0.03 per 1K tokens
+    },
+    'gpt-4o': {
+      input: 0.0025,   // $0.0025 per 1K tokens ($2.50 per 1M)
+      output: 0.01     // $0.01 per 1K tokens ($10 per 1M)
+    },
+    'gpt-4o-mini': {
+      input: 0.00015,  // $0.00015 per 1K tokens ($0.15 per 1M)
+      output: 0.0006   // $0.0006 per 1K tokens ($0.60 per 1M)
     }
   };
 

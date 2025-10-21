@@ -31,7 +31,7 @@ ${request.text}
                         "Authorization": `Bearer ${OPENAI_API_KEY}`
                     },
                     body: JSON.stringify({
-                        model: "gpt-3.5-turbo",
+                        model: "gpt-4o-mini",
                         messages: [
                             { role: "system", content: "You are a helpful assistant that generates study flashcards. Always respond with valid JSON ONLY. Make sure it is in correct format or else parsing will not work." },
                             { role: "user", content: prompt }
@@ -56,7 +56,7 @@ ${request.text}
                 // Calculate cost if usage data is available
                 let costInfo = null;
                 if (data.usage) {
-                    costInfo = CostCalculator.calculateCost('gpt-3.5-turbo', data.usage);
+                    costInfo = CostCalculator.calculateCost('gpt-4o-mini', data.usage);
                     if (costInfo) {
                         const formatted = CostCalculator.formatCostDisplay(costInfo);
                         console.log("💰 API Cost:", formatted.detailed);

@@ -1,4 +1,4 @@
-import { NOTION_API_KEY, NOTION_PAGE_ID } from '../../secrets.js';
+// OAuth-only version - no fallback to hardcoded credentials
 
 // Extract text from Notion block
 function extractTextFromBlock(block) {
@@ -16,7 +16,11 @@ function extractTextFromBlock(block) {
 }
 
 // Recursively fetch Notion page blocks
-async function fetchBlocksRecursive(blockId, allText = [], onProgress = null, accessToken = null) {
+async function fetchBlocksRecursive(blockId, allText = [], onProgress = null, accessToken) {
+  if (!accessToken) {
+    throw new Error("Access token is required");
+  }
+
   let url = `https://api.notion.com/v1/blocks/${blockId}/children`;
   let hasMore = true;
   let startCursor = null;
@@ -26,11 +30,10 @@ async function fetchBlocksRecursive(blockId, allText = [], onProgress = null, ac
     const query = startCursor ? `?start_cursor=${startCursor}` : "";
     console.log(`Fetching Notion blocks from: ${url}${query}`);
     
-    const token = accessToken || NOTION_API_KEY;
     const response = await fetch(url + query, {
       method: "GET",
       headers: {
-        "Authorization": `Bearer ${token}`,
+        "Authorization": `Bearer ${accessToken}`,
         "Notion-Version": "2022-06-28",
         "Content-Type": "application/json"
       }
@@ -78,11 +81,9 @@ async function fetchBlocksRecursive(blockId, allText = [], onProgress = null, ac
 }
 
 // Fetch available pages from Notion using search API
-export async function fetchAvailablePages(accessToken = null) {
-  const token = accessToken || NOTION_API_KEY;
-  
-  if (!token) {
-    throw new Error("No access token available. Please connect to Notion first.");
+export async function fetchAvailablePages(accessToken) {
+  if (!accessToken) {
+    throw new Error("Access token is required. Please connect to Notion first.");
   }
   
   console.log("Fetching available pages from Notion...");
@@ -92,7 +93,7 @@ export async function fetchAvailablePages(accessToken = null) {
   const response = await fetch(searchUrl, {
     method: "POST",
     headers: {
-      "Authorization": `Bearer ${token}`,
+      "Authorization": `Bearer ${accessToken}`,
       "Notion-Version": "2022-06-28",
       "Content-Type": "application/json"
     },
@@ -130,20 +131,24 @@ export async function fetchAvailablePages(accessToken = null) {
 }
 
 // Main function to fetch all content from Notion page
-export async function fetchNotionContent(onProgress = null, accessToken = null, pageId = null) {
-  // Use provided parameters or fall back to hardcoded values
-  const token = accessToken || NOTION_API_KEY;
-  const targetPageId = pageId || NOTION_PAGE_ID;
+export async function fetchNotionContent(onProgress = null, accessToken, pageId) {
+  if (!accessToken) {
+    throw new Error("Access token is required. Please connect to Notion first.");
+  }
   
-  console.log("Starting Notion fetch for page ID:", targetPageId);
-  const allText = await fetchBlocksRecursive(targetPageId, [], onProgress, token);
+  if (!pageId) {
+    throw new Error("Page ID is required. Please select a page.");
+  }
+  
+  console.log("Starting Notion fetch for page ID:", pageId);
+  const allText = await fetchBlocksRecursive(pageId, [], onProgress, accessToken);
   const notionText = allText.join("\n\n");
   
   console.log("Extracted text length:", notionText.length);
   console.log("First 200 chars of text:", notionText.substring(0, 200));
   
   if (!notionText.trim()) {
-    throw new Error("No text content found in Notion page. Please check if the page has content and the API key has access.");
+    throw new Error("No text content found in Notion page. Please check if the page has content and you have access.");
   }
   
   return notionText;

@@ -1,3 +1,6 @@
+// =============================================================================
+// IMPORTS
+// =============================================================================
 import { fetchNotionContent, fetchAvailablePages } from '../services/notion-api.js';
 import { generateFlashcards } from '../services/flashcard-generator.js';
 import { exportFlashcards } from '../services/apkg-exporter.js';
@@ -5,332 +8,468 @@ import { UIController } from '../components/ui-controller.js';
 import { notionOAuth } from '../services/notion-oauth.js';
 import { incrementGenerations, incrementAnkiExports, updateAccessiblePages } from '../services/supabase-client.js';
 
-// Initialize UI controller
-const uiController = new UIController();
+// =============================================================================
+// STATE MANAGEMENT
+// =============================================================================
+class PopupState {
+  constructor() {
+    this.availablePages = [];
+    this.isLoading = false;
+  }
 
-// Available pages from Notion
-let availablePages = [];
+  setPages(pages) {
+    this.availablePages = pages;
+  }
 
-// Load available pages from Notion
-async function loadAvailablePages() {
-  try {
-    console.log('Loading available pages...');
-    notionPageDropdown.disabled = true;
-    notionPageDropdown.innerHTML = '<option value="">Loading pages...</option>';
-    refreshPagesButton.disabled = true;
+  getPages() {
+    return this.availablePages;
+  }
+
+  setLoading(loading) {
+    this.isLoading = loading;
+  }
+
+  isLoadingState() {
+    return this.isLoading;
+  }
+}
+
+// =============================================================================
+// DOM ELEMENTS CACHE
+// =============================================================================
+class DOMElements {
+  constructor() {
+    // Auth elements
+    this.authIndicator = document.getElementById("authIndicator");
+    this.authText = document.getElementById("authText");
+    this.connectButton = document.getElementById("connectButton");
+    this.logoutButton = document.getElementById("logoutButton");
     
-    const accessToken = await notionOAuth.getAccessToken();
-    if (!accessToken) {
-      throw new Error("No access token available. Please connect to Notion first.");
+    // Page selection elements
+    this.pageInputSection = document.getElementById("pageInputSection");
+    this.notionPageDropdown = document.getElementById("notionPageDropdown");
+    this.refreshPagesButton = document.getElementById("refreshPagesButton");
+    
+    // Action buttons
+    this.fetchButton = document.getElementById("fetchButton");
+    this.exportButton = document.getElementById("exportButton");
+    
+    // Loading elements
+    this.loadingContainer = document.getElementById("loadingContainer");
+    this.loadingText = this.loadingContainer?.querySelector('.loading-text');
+  }
+}
+
+// =============================================================================
+// PAGE MANAGER - Handles page loading and dropdown
+// =============================================================================
+class PageManager {
+  constructor(state, elements, uiController) {
+    this.state = state;
+    this.elements = elements;
+    this.uiController = uiController;
+  }
+
+  async loadPages() {
+    try {
+      console.log('Loading available pages...');
+      this.setDropdownLoading(true);
+      
+      const accessToken = await notionOAuth.getAccessToken();
+      if (!accessToken) {
+        throw new Error("No access token available. Please connect to Notion first.");
+      }
+      
+      const pages = await fetchAvailablePages(accessToken);
+      this.state.setPages(pages);
+      this.populateDropdown();
+      
+      await this.updateAccessiblePagesCount(pages.length);
+      
+    } catch (error) {
+      console.error('Error loading pages:', error);
+      this.elements.notionPageDropdown.innerHTML = '<option value="">Error loading pages</option>';
+      this.uiController.showError("Failed to load pages: " + error.message);
+    } finally {
+      this.setDropdownLoading(false);
     }
+  }
+
+  populateDropdown() {
+    const pages = this.state.getPages();
+    this.elements.notionPageDropdown.innerHTML = '<option value="">Select a page...</option>';
     
-    availablePages = await fetchAvailablePages(accessToken);
-    populateDropdown();
-    
-    // Update accessible pages count in Supabase
-    const { user_email } = await chrome.storage.local.get(['user_email']);
-    if (user_email && availablePages.length > 0) {
-      console.log('📊 Calling updateAccessiblePages...');
-      const result = await updateAccessiblePages(user_email, availablePages.length);
-      console.log('📊 Update result:', result);
-    } else {
-      console.log('❌ Not updating - user_email:', user_email, 'pages:', availablePages.length);
-    }
-    
-  } catch (error) {
-    console.error('Error loading pages:', error);
-    notionPageDropdown.innerHTML = '<option value="">Error loading pages</option>';
-    uiController.showError("Failed to load pages: " + error.message);
-  } finally {
-    notionPageDropdown.disabled = false;
-    refreshPagesButton.disabled = false;
-  }
-}
-
-// Populate the dropdown with available pages
-function populateDropdown() {
-  notionPageDropdown.innerHTML = '<option value="">Select a page...</option>';
-  
-  if (availablePages.length === 0) {
-    notionPageDropdown.innerHTML = '<option value="">No pages found</option>';
-    return;
-  }
-  
-  availablePages.forEach(page => {
-    const option = document.createElement('option');
-    option.value = page.id;
-    option.textContent = page.title;
-    option.dataset.url = page.url;
-    notionPageDropdown.appendChild(option);
-  });
-  
-  updateFetchButtonState();
-}
-
-// Loading state management
-function showLoadingSpinner() {
-  const loadingContainer = document.getElementById('loadingContainer');
-  const fetchButton = document.getElementById('fetchButton');
-  
-  loadingContainer.style.display = 'flex';
-  fetchButton.disabled = true;
-  fetchButton.style.opacity = '0.6';
-  
-  // Hide the loading text
-  const loadingText = loadingContainer.querySelector('.loading-text');
-  if (loadingText) {
-    loadingText.style.display = 'none';
-  }
-  
-  // Expand the overlay panel to show the loading spinner
-  if (window.parent && window.parent !== window) {
-    window.parent.postMessage({ action: "expandPanel" }, "*");
-  }
-}
-
-function hideLoadingSpinner() {
-  const loadingContainer = document.getElementById('loadingContainer');
-  const fetchButton = document.getElementById('fetchButton');
-  
-  loadingContainer.style.display = 'none';
-  fetchButton.disabled = false;
-  fetchButton.style.opacity = '1';
-  
-  // Show the loading text again for next time
-  const loadingText = loadingContainer.querySelector('.loading-text');
-  if (loadingText) {
-    loadingText.style.display = 'block';
-  }
-}
-
-// Initialize export button as disabled
-const exportButton = document.getElementById("exportButton");
-exportButton.disabled = true;
-exportButton.style.opacity = "0.5";
-
-// Add event listener for export button
-exportButton.addEventListener("click", async () => {
-  await handleExportToAnki(exportButton);
-});
-
-// OAuth UI elements
-const authIndicator = document.getElementById("authIndicator");
-const authText = document.getElementById("authText");
-const connectButton = document.getElementById("connectButton");
-const logoutButton = document.getElementById("logoutButton");
-const pageInputSection = document.getElementById("pageInputSection");
-const notionPageDropdown = document.getElementById("notionPageDropdown");
-const refreshPagesButton = document.getElementById("refreshPagesButton");
-const fetchButton = document.getElementById("fetchButton");
-
-// Initialize OAuth state
-async function initializeOAuthState() {
-  console.log('Initializing OAuth state...');
-  
-  const isAuthenticated = await notionOAuth.isAuthenticated();
-  console.log('Is authenticated:', isAuthenticated);
-  
-  if (isAuthenticated) {
-    console.log('Saving user info to Supabase...');
-    await notionOAuth.saveUserInfoIfNeeded();
-    console.log('User info saved to Supabase');
-  }
-  
-  updateAuthUI(isAuthenticated);
-}
-
-// Update OAuth UI based on authentication status
-function updateAuthUI(isAuthenticated) {
-  console.log('Updating auth UI, isAuthenticated:', isAuthenticated);
-
-  authText.style.display = "none";
-  
-  if (isAuthenticated) {
-    authIndicator.className = "auth-indicator connected";
-    authText.textContent = "Connected to Notion";
-    connectButton.style.display = "none";
-    logoutButton.style.display = "inline-block";
-    
-    // Show page selection section and load available pages
-    pageInputSection.style.display = "block";
-    loadAvailablePages();
-    
-    updateFetchButtonState();
-  } else {
-    authIndicator.className = "auth-indicator disconnected";
-    authText.textContent = "Not connected to Notion";
-    connectButton.style.display = "block";
-    logoutButton.style.display = "none";
-    pageInputSection.style.display = "none";
-    fetchButton.disabled = true;
-    fetchButton.style.opacity = "0.5";
-  }
-  
-  console.log('Connect button display:', connectButton.style.display);
-  console.log('Connect button disabled:', connectButton.disabled);
-}
-
-// Update fetch button state based on page selection
-function updateFetchButtonState() {
-  const selectedPageId = notionPageDropdown.value;
-  
-  if (selectedPageId && selectedPageId.trim() !== "") {
-    fetchButton.disabled = false;
-    fetchButton.style.opacity = "1";
-  } else {
-    fetchButton.disabled = true;
-    fetchButton.style.opacity = "0.5";
-  }
-}
-
-// Event listeners for OAuth controls
-connectButton.addEventListener("click", async () => {
-  console.log("Connect button clicked!");
-  try {
-    connectButton.disabled = true;
-    connectButton.textContent = "Connecting...";
-    console.log("Starting OAuth flow...");
-    
-    await notionOAuth.authorize();
-    console.log("OAuth flow completed successfully");
-    updateAuthUI(true);
-    
-  } catch (error) {
-    console.error("OAuth connection failed:", error);
-    uiController.showError("Failed to connect to Notion: " + error.message);
-  } finally {
-    connectButton.disabled = false;
-    connectButton.textContent = "Connect to Notion";
-  }
-});
-
-logoutButton.addEventListener("click", async () => {
-  try {
-    await notionOAuth.logout();
-    updateAuthUI(false);
-    uiController.clearOutput();
-    exportButton.disabled = true;
-    exportButton.style.opacity = "0.5";
-  } catch (error) {
-    console.error("Logout failed:", error);
-    uiController.showError("Failed to logout: " + error.message);
-  }
-});
-
-// Event listener for page dropdown selection
-notionPageDropdown.addEventListener("change", updateFetchButtonState);
-
-// Event listener for refresh pages button
-refreshPagesButton.addEventListener("click", () => {
-  loadAvailablePages();
-});
-
-// Initialize OAuth state on load
-initializeOAuthState();
-
-// --- Generate flashcards ---
-document.getElementById("fetchButton").addEventListener("click", async () => {
-  // Start loading animation
-  showLoadingSpinner();
-  
-  uiController.clearOutput();
-  uiController.updateStatus("");
-  
-  try {
-    // Get OAuth token
-    const accessToken = await notionOAuth.getAccessToken();
-    if (!accessToken) {
-      throw new Error("No access token found. Please connect to Notion first.");
-    }
-
-    // Get selected page ID from dropdown
-    const pageId = notionPageDropdown.value;
-    if (!pageId || pageId.trim() === "") {
-      throw new Error("Please select a Notion page from the dropdown.");
-    }
-    
-    console.log("Using selected page ID:", pageId);
-
-    // Fetch content from Notion
-    const notionText = await fetchNotionContent(
-      (status) => {
-        // Status updates during fetch (optional)
-      },
-      accessToken,
-      pageId
-    );
-    
-    if (!notionText.trim()) {
-      uiController.showError("No text content found in Notion page. Please check if the page has content and you have access.");
+    if (pages.length === 0) {
+      this.elements.notionPageDropdown.innerHTML = '<option value="">No pages found</option>';
       return;
     }
     
-    // Generate flashcards using the service
-    const result = await generateFlashcards(notionText);
-    const cards = result.flashcards || result;
-    const costInfo = result.costInfo;
+    pages.forEach(page => {
+      const option = document.createElement('option');
+      option.value = page.id;
+      option.textContent = page.title;
+      option.dataset.url = page.url;
+      this.elements.notionPageDropdown.appendChild(option);
+    });
     
-    // Display flashcards
-    uiController.displayFlashcards(cards, () => {
+    this.updateFetchButtonState();
+  }
+
+  setDropdownLoading(loading) {
+    this.elements.notionPageDropdown.disabled = loading;
+    this.elements.refreshPagesButton.disabled = loading;
+    
+    if (loading) {
+      this.elements.notionPageDropdown.innerHTML = '<option value="">Loading pages...</option>';
+    }
+  }
+
+  updateFetchButtonState() {
+    const selectedPageId = this.elements.notionPageDropdown.value;
+    const hasSelection = selectedPageId && selectedPageId.trim() !== "";
+    
+    this.elements.fetchButton.disabled = !hasSelection;
+    this.elements.fetchButton.style.opacity = hasSelection ? "1" : "0.5";
+  }
+
+  async updateAccessiblePagesCount(count) {
+    const { user_email } = await chrome.storage.local.get(['user_email']);
+    
+    if (user_email && count > 0) {
+      console.log('📊 Updating accessible pages count...');
+      const result = await updateAccessiblePages(user_email, count);
+      console.log('📊 Update result:', result);
+    }
+  }
+
+  getSelectedPageId() {
+    return this.elements.notionPageDropdown.value;
+  }
+}
+
+// =============================================================================
+// AUTH MANAGER - Handles OAuth authentication
+// =============================================================================
+class AuthManager {
+  constructor(elements, uiController, pageManager) {
+    this.elements = elements;
+    this.uiController = uiController;
+    this.pageManager = pageManager;
+  }
+
+  async initialize() {
+    console.log('Initializing OAuth state...');
+    
+    const isAuthenticated = await notionOAuth.isAuthenticated();
+    console.log('Is authenticated:', isAuthenticated);
+    
+    if (isAuthenticated) {
+      await notionOAuth.saveUserInfoIfNeeded();
+    }
+    
+    this.updateUI(isAuthenticated);
+  }
+
+  updateUI(isAuthenticated) {
+    console.log('Updating auth UI, isAuthenticated:', isAuthenticated);
+    
+    this.elements.authText.style.display = "none";
+    
+    if (isAuthenticated) {
+      this.showAuthenticatedState();
+    } else {
+      this.showUnauthenticatedState();
+    }
+  }
+
+  showAuthenticatedState() {
+    this.elements.authIndicator.className = "auth-indicator connected";
+    this.elements.authText.textContent = "Connected to Notion";
+    this.elements.connectButton.style.display = "none";
+    this.elements.logoutButton.style.display = "inline-block";
+    this.elements.pageInputSection.style.display = "block";
+    
+    this.pageManager.loadPages();
+    this.pageManager.updateFetchButtonState();
+  }
+
+  showUnauthenticatedState() {
+    this.elements.authIndicator.className = "auth-indicator disconnected";
+    this.elements.authText.textContent = "Not connected to Notion";
+    this.elements.connectButton.style.display = "block";
+    this.elements.logoutButton.style.display = "none";
+    this.elements.pageInputSection.style.display = "none";
+    this.elements.fetchButton.disabled = true;
+    this.elements.fetchButton.style.opacity = "0.5";
+  }
+
+  async connect() {
+    try {
+      this.elements.connectButton.disabled = true;
+      this.elements.connectButton.textContent = "Connecting...";
+      
+      await notionOAuth.authorize();
+      console.log("OAuth flow completed successfully");
+      
+      this.updateUI(true);
+      
+    } catch (error) {
+      console.error("OAuth connection failed:", error);
+      this.uiController.showError("Failed to connect to Notion: " + error.message);
+    } finally {
+      this.elements.connectButton.disabled = false;
+      this.elements.connectButton.textContent = "Connect to Notion";
+    }
+  }
+
+  async logout() {
+    try {
+      await notionOAuth.logout();
+      this.updateUI(false);
+      this.uiController.clearOutput();
+      this.elements.exportButton.disabled = true;
+      this.elements.exportButton.style.opacity = "0.5";
+    } catch (error) {
+      console.error("Logout failed:", error);
+      this.uiController.showError("Failed to logout: " + error.message);
+    }
+  }
+}
+
+// =============================================================================
+// LOADING MANAGER - Handles loading states
+// =============================================================================
+class LoadingManager {
+  constructor(elements) {
+    this.elements = elements;
+  }
+
+  show() {
+    this.elements.loadingContainer.style.display = 'flex';
+    this.elements.fetchButton.disabled = true;
+    this.elements.fetchButton.style.opacity = '0.6';
+    
+    if (this.elements.loadingText) {
+      this.elements.loadingText.style.display = 'none';
+    }
+    
+    this.expandPanelIfInOverlay();
+  }
+
+  hide() {
+    this.elements.loadingContainer.style.display = 'none';
+    this.elements.fetchButton.disabled = false;
+    this.elements.fetchButton.style.opacity = '1';
+    
+    if (this.elements.loadingText) {
+      this.elements.loadingText.style.display = 'block';
+    }
+  }
+
+  expandPanelIfInOverlay() {
+    if (window.parent && window.parent !== window) {
+      window.parent.postMessage({ action: "expandPanel" }, "*");
+    }
+  }
+}
+
+// =============================================================================
+// FLASHCARD GENERATOR - Handles flashcard generation
+// =============================================================================
+class FlashcardGenerator {
+  constructor(uiController, loadingManager) {
+    this.uiController = uiController;
+    this.loadingManager = loadingManager;
+  }
+
+  async generate(pageId) {
+    this.loadingManager.show();
+    this.uiController.clearOutput();
+    this.uiController.updateStatus("");
+    
+    try {
+      const accessToken = await this.getAccessToken();
+      this.validatePageId(pageId);
+      
+      const notionText = await this.fetchContent(accessToken, pageId);
+      const { cards, costInfo } = await this.generateCards(notionText);
+      
+      this.displayCards(cards, costInfo);
+      await this.trackGeneration(costInfo);
+      
+    } catch (error) {
+      console.error(error);
+      this.uiController.showError(error.message || "Failed to generate flashcards.");
+    } finally {
+      this.loadingManager.hide();
+    }
+  }
+
+  async getAccessToken() {
+    const token = await notionOAuth.getAccessToken();
+    if (!token) {
+      throw new Error("No access token found. Please connect to Notion first.");
+    }
+    return token;
+  }
+
+  validatePageId(pageId) {
+    if (!pageId || pageId.trim() === "") {
+      throw new Error("Please select a Notion page from the dropdown.");
+    }
+  }
+
+  async fetchContent(accessToken, pageId) {
+    console.log("Fetching content for page:", pageId);
+    
+    const text = await fetchNotionContent(null, accessToken, pageId);
+    
+    if (!text.trim()) {
+      throw new Error("No text content found in Notion page. Please check if the page has content and you have access.");
+    }
+    
+    return text;
+  }
+
+  async generateCards(text) {
+    const result = await generateFlashcards(text);
+    return {
+      cards: result.flashcards || result,
+      costInfo: result.costInfo
+    };
+  }
+
+  displayCards(cards, costInfo) {
+    this.uiController.displayFlashcards(cards, () => {
       // Enable export button after flashcards are loaded
+      const exportButton = document.getElementById("exportButton");
       exportButton.disabled = false;
       exportButton.style.opacity = "1";
       
       // Show cost information
       if (costInfo) {
-        uiController.showCostInfo(costInfo);
+        this.uiController.showCostInfo(costInfo);
       }
     });
+  }
 
-    // Track generation in Supabase
+  async trackGeneration(costInfo) {
     const { user_email } = await chrome.storage.local.get(['user_email']);
+    
     if (user_email) {
-      console.log('🔍 INCREMENT GENERATIONS for user email:', user_email);
       const cost = costInfo?.totalCost || 0;
-      console.log('💰 Generation cost:', cost);
+      console.log('📊 Tracking generation:', { user_email, cost });
       await incrementGenerations(user_email, cost);
     }
-    
-  } catch (err) {
-    console.error(err);
-    uiController.showError(err.message || "Failed to generate flashcards.");
-  } finally {
-    // Always stop loading animation
-    hideLoadingSpinner();
-  }
-});
-
-// --- Handle APKG export ---
-async function handleExportToAnki(button) {
-  console.log("Export to Anki clicked");
-  
-  const cards = uiController.getCards();
-  if (!cards || cards.length === 0) {
-    alert("No flashcards to export!");
-    return;
-  }
-  
-  const originalText = uiController.showExportProgress(button);
-  
-  try {
-    // Export flashcards using the service
-    const result = await exportFlashcards(cards, "Notion Flashcards");
-    
-    if (result.success) {
-      uiController.showExportSuccess(button, originalText, result.filename);
-
-      // Track the Anki export in Supabase
-      const { user_email } = await chrome.storage.local.get(['user_email']);
-      if (user_email) {
-        console.log('📦 Tracking Anki export for user:', user_email);
-        await incrementAnkiExports(user_email);
-      }
-    } else {
-      throw new Error(result.error);
-    }
-    
-  } catch (err) {
-    console.error("Error exporting flashcards:", err);
-    uiController.showExportError(button, originalText, err.message);
   }
 }
+
+// =============================================================================
+// EXPORT MANAGER - Handles APKG export
+// =============================================================================
+class ExportManager {
+  constructor(uiController) {
+    this.uiController = uiController;
+  }
+
+  async export(button) {
+    console.log("Export to Anki clicked");
+    
+    const cards = this.uiController.getCards();
+    if (!cards || cards.length === 0) {
+      alert("No flashcards to export!");
+      return;
+    }
+    
+    const originalText = this.uiController.showExportProgress(button);
+    
+    try {
+      const result = await exportFlashcards(cards, "Notion Flashcards");
+      
+      if (result.success) {
+        this.uiController.showExportSuccess(button, originalText, result.filename);
+        await this.trackExport();
+      } else {
+        throw new Error(result.error);
+      }
+      
+    } catch (error) {
+      console.error("Error exporting flashcards:", error);
+      this.uiController.showExportError(button, originalText, error.message);
+    }
+  }
+
+  async trackExport() {
+    const { user_email } = await chrome.storage.local.get(['user_email']);
+    
+    if (user_email) {
+      console.log('📦 Tracking Anki export for user:', user_email);
+      await incrementAnkiExports(user_email);
+    }
+  }
+}
+
+// =============================================================================
+// APPLICATION INITIALIZATION
+// =============================================================================
+class PopupApp {
+  constructor() {
+    this.state = new PopupState();
+    this.elements = new DOMElements();
+    this.uiController = new UIController();
+    this.loadingManager = new LoadingManager(this.elements);
+    this.pageManager = new PageManager(this.state, this.elements, this.uiController);
+    this.authManager = new AuthManager(this.elements, this.uiController, this.pageManager);
+    this.flashcardGenerator = new FlashcardGenerator(this.uiController, this.loadingManager);
+    this.exportManager = new ExportManager(this.uiController);
+  }
+
+  initialize() {
+    this.setupInitialState();
+    this.attachEventListeners();
+    this.authManager.initialize();
+  }
+
+  setupInitialState() {
+    // Initialize export button as disabled
+    this.elements.exportButton.disabled = true;
+    this.elements.exportButton.style.opacity = "0.5";
+  }
+
+  attachEventListeners() {
+    // Auth events
+    this.elements.connectButton.addEventListener("click", () => {
+      this.authManager.connect();
+    });
+
+    this.elements.logoutButton.addEventListener("click", () => {
+      this.authManager.logout();
+    });
+
+    // Page selection events
+    this.elements.notionPageDropdown.addEventListener("change", () => {
+      this.pageManager.updateFetchButtonState();
+    });
+
+    this.elements.refreshPagesButton.addEventListener("click", () => {
+      this.pageManager.loadPages();
+    });
+
+    // Flashcard generation
+    this.elements.fetchButton.addEventListener("click", () => {
+      const pageId = this.pageManager.getSelectedPageId();
+      this.flashcardGenerator.generate(pageId);
+    });
+
+    // Export
+    this.elements.exportButton.addEventListener("click", () => {
+      this.exportManager.export(this.elements.exportButton);
+    });
+  }
+}
+
+// =============================================================================
+// START APPLICATION
+// =============================================================================
+const app = new PopupApp();
+app.initialize();

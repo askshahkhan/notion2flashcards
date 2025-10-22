@@ -35,14 +35,6 @@
       "matches": ["<all_urls>"]
     }
   ],
-  "action": {
-    "default_popup": "src/popup/popup.html",
-    "default_icon": {
-      "16": "assets/logo_main.png",
-      "48": "assets/logo_main.png",
-      "128": "assets/logo_main.png"
-    }
-  },
   "icons": {
     "16": "assets/logo_main.png",
     "48": "assets/logo_main.png",

@@ -15,27 +15,26 @@
   <div class="container">
     <img src="/assets/logo.png" alt="Logo" class="logo">
 
-    <!-- OAuth Status Section -->
-    <div id="authStatus" class="auth-status">
-      <div id="authIndicator" class="auth-indicator disconnected">
-        <span class="auth-dot"></span>
-        <span id="authText">Not connected to Notion</span>
+    <!-- Settings Menu (shown when authenticated) -->
+    <div id="settingsMenu" class="settings-menu" style="display: none;">
+      <img src="/assets/setting-icon.png" alt="Settings" class="settings-icon">
+      <div class="settings-dropdown">
+        <button id="logoutButton" class="logout-btn">
+          Logout
+        </button>
       </div>
     </div>
 
-    <!-- OAuth Controls -->
+    <!-- OAuth Controls (shown when not authenticated) -->
     <div id="oauthControls" class="oauth-controls">
       <button id="connectButton" class="connect-btn">
         Connect to Notion
-      </button>
-      <button id="logoutButton" class="logout-btn" style="display: none;">
-        Logout
       </button>
     </div>
 
     <!-- Page Selection Dropdown (shown when authenticated) -->
     <div id="pageInputSection" class="page-input-section" style="display: none;">
-      <!-- <label for="notionPageDropdown">Select Notion Page:</label> -->
+      <label for="notionPageDropdown" class="section-label">Choose Notion page</label>
       <div class="dropdown-container">
         <select id="notionPageDropdown" class="page-dropdown">
           <option value="">Loading pages...</option>
@@ -44,13 +43,16 @@
       </div>
     </div>
 
-    <div class="button-navbar">
-      <button id="fetchButton" disabled>
-        Generate Flashcards
-      </button>
-      <button id="exportButton">
-        Export to Anki
-      </button>
+    <div class="actions-section">
+      <label class="section-label">Actions</label>
+      <div class="button-navbar">
+        <button id="fetchButton" disabled>
+          Generate Flashcards
+        </button>
+        <button id="exportButton">
+          Export to Anki
+        </button>
+      </div>
     </div>
 
     <!-- Loading Spinner -->

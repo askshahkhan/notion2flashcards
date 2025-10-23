@@ -39,11 +39,13 @@ class PopupState {
 // =============================================================================
 class DOMElements {
   constructor() {
+    // Settings menu
+    this.settingsMenu = document.getElementById("settingsMenu");
+    
     // Auth elements
-    this.authIndicator = document.getElementById("authIndicator");
-    this.authText = document.getElementById("authText");
     this.connectButton = document.getElementById("connectButton");
     this.logoutButton = document.getElementById("logoutButton");
+    this.oauthControls = document.getElementById("oauthControls");
     
     // Page selection elements
     this.pageInputSection = document.getElementById("pageInputSection");
@@ -173,8 +175,6 @@ class AuthManager {
   updateUI(isAuthenticated) {
     console.log('Updating auth UI, isAuthenticated:', isAuthenticated);
     
-    this.elements.authText.style.display = "none";
-    
     if (isAuthenticated) {
       this.showAuthenticatedState();
     } else {
@@ -183,10 +183,8 @@ class AuthManager {
   }
 
   showAuthenticatedState() {
-    this.elements.authIndicator.className = "auth-indicator connected";
-    this.elements.authText.textContent = "Connected to Notion";
-    this.elements.connectButton.style.display = "none";
-    this.elements.logoutButton.style.display = "inline-block";
+    this.elements.oauthControls.style.display = "none";
+    this.elements.settingsMenu.style.display = "block";
     this.elements.pageInputSection.style.display = "block";
     
     this.pageManager.loadPages();
@@ -194,10 +192,8 @@ class AuthManager {
   }
 
   showUnauthenticatedState() {
-    this.elements.authIndicator.className = "auth-indicator disconnected";
-    this.elements.authText.textContent = "Not connected to Notion";
-    this.elements.connectButton.style.display = "block";
-    this.elements.logoutButton.style.display = "none";
+    this.elements.oauthControls.style.display = "block";
+    this.elements.settingsMenu.style.display = "none";
     this.elements.pageInputSection.style.display = "none";
     this.elements.fetchButton.disabled = true;
     this.elements.fetchButton.style.opacity = "0.5";

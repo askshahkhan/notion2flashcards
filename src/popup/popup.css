@@ -1,546 +1,567 @@
 /* =============================================================================
    FONTS & IMPORTS
    ============================================================================= */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
-/* =============================================================================
-   BASE STYLES
-   ============================================================================= */
-body {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 
-                 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 
-                 'Helvetica Neue', sans-serif;
-    min-width: 320px;
-    margin: 0;
-    padding: 0;
-    background-color: #ffffff;
-    color: #37352f;
-    font-size: 14px;
-    line-height: 1.5;
-    font-weight: 400;
-}
-
-/* =============================================================================
-   LAYOUT COMPONENTS
-   ============================================================================= */
-   .container {
-    padding: 16px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    background-color: #ffffff;
-    width: 100%;
-    box-sizing: border-box;
-    position: relative; /* Add this so the dot positions relative to the container */
-}
-
-.logo {
-    width: 100px;
-    height: auto;
-    margin-bottom: 20px;
-}
-
-/* =============================================================================
-   OAUTH COMPONENTS
-   ============================================================================= */
-/* Auth Status Indicator */
-.auth-status {
-    position: absolute;
-    top: 25px;
-    right: 25px;
-    margin-bottom: 0;
-}
-
-.auth-indicator {
-    display: flex;
-    align-items: center;
-    padding: 0;
-    background: none !important;
-    border: none !important;
-}
-
-#authText {
-    display: none; /* Hide the text */
-}
-
-.auth-indicator.connected {
-    background-color: #f0f9ff;
-    border: 1px solid #2eaadc;
-    color: #1e40af;
-}
-
-.auth-indicator.disconnected {
-    background-color: #fef2f2;
-    border: 1px solid #fca5a5;
-    color: #dc2626;
-} 
-
-.auth-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    display: inline-block;
-}
-
-.auth-indicator.connected .auth-dot {
-    background-color: #10b981;
-}
-
-.auth-indicator.disconnected .auth-dot {
-    background-color: #ef4444;
-}
-
-/* OAuth Controls */
-.oauth-controls {
-    margin-bottom: 16px;
-    width: 100%;
-}
-
-.connect-btn {
-    background-color: #2563eb;
-    color: white;
-    border: 1px solid #2563eb;
-    width: 100%;
-    justify-content: center;
-}
-
-.connect-btn:hover {
-    background-color: #1d4ed8;
-    border-color: #1d4ed8;
-}
-
-.logout-btn {
-    background-color: #f7f6f3;
-    color: #37352f;
-    border: 1px solid #e9e9e7;
-    width: auto;
-    padding: 6px 16px;
-    font-size: 13px;
-    justify-content: center;
-    box-shadow: 0 0 15px rgba(188, 153, 102, 0.8);
-    transition: all 0.3s ease;
-    align-self: center;
-}
-
-.logout-btn:hover {
-    background-color: #f1f0ed;
-    border-color: #d9d9d7;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.logout-btn:active {
-    transform: translateY(1px);
-}
-
-/* Page URL Input Section */
-.page-input-section {
-    margin-bottom: 16px;
-    width: 100%;
-}
-
-/* .page-input-section label {
-    display: block;
-    margin-bottom: 6px;
-    font-size: 13px;
-    font-weight: 500;
-    color: #374151;
-} */
-
-.dropdown-container {
-    position: relative;
-    width: 100%;
-    display: flex;
-    gap: 8px;
-    align-items: stretch; /* Change from center to stretch */
-}
-
-.page-dropdown {
-    flex: 1;
-    padding: 8px 16px;
-    font-size: 14px;
-    border: 1px solid #e9e9e7;
-    border-radius: 9999px;
-    background-color: #f7f6f3;
-    color: #37352f;
-    box-sizing: border-box;
-    transition: all 0.3s ease;
-    cursor: pointer;
-    font-weight: 500;
-    height: auto;
-    font-family: inherit;
-    box-shadow: 0 0 15px rgba(188, 153, 102, 0.8); /* Added golden glow */
-}
-
-.page-dropdown:focus {
-    outline: none;
-    border-color: #2eaadc; /* Updated to match brand color */
-    box-shadow: 0 0 0 3px rgba(46, 170, 220, 0.1);
-}
-
-.page-dropdown:hover {
-    background-color: #f1f0ed;
-    border-color: #d9d9d7;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Added hover shadow */
-}
-
-.page-dropdown:disabled {
-    background-color: #f3f4f6;
-    cursor: not-allowed;
-    opacity: 0.6;
-    box-shadow: none; /* Remove glow when disabled */
-}
-
-.refresh-btn {
-    padding: 8px 16px; /* Match button padding */
-    font-size: 14px;
-    border: 1px solid #e9e9e7;
-    border-radius: 9999px; /* Match button pill shape */
-    background-color: #f7f6f3;
-    color: #37352f;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-width: auto; /* Remove fixed width */
-    height: auto; /* Let it match button height dynamically */
-    margin-bottom: 0;
-    font-weight: 500;
-    box-shadow: 0 0 15px rgba(188, 153, 102, 0.8); /* Match button glow */
-}
-
-.refresh-btn:hover {
-    background-color: #f1f0ed;
-    border-color: #d9d9d7;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.refresh-btn:disabled {
-    background-color: #f3f4f6;
-    cursor: not-allowed;
-    opacity: 0.6;
-}
-
-.dropdown-help {
-    display: block;
-    margin-top: 4px;
-    font-size: 12px;
-    color: #6b7280;
-    line-height: 1.4;
-}
-
-/* =============================================================================
-   NAVBAR BUTTONS
-   ============================================================================= */
-.button-navbar {
-    display: flex;
-    gap: 0;
-    margin-bottom: 16px;
-    width: 100%;
-    box-sizing: border-box;
-}
-
-.button-navbar button {
-    flex: 1;
-    margin-bottom: 0;
-    border-radius: 0;
-    border-right: none;
-    box-sizing: border-box;
-    white-space: nowrap;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-}
-
-.button-navbar button:first-child {
-    border-top-left-radius: 9999px;
-    border-bottom-left-radius: 9999px;
-}
-
-.button-navbar button:last-child {
-    border-top-right-radius: 9999px;
-    border-bottom-right-radius: 9999px;
-    border-right: 1px solid #e9e9e7;
-}
-
-/* =============================================================================
-   TYPOGRAPHY
-   ============================================================================= */
-h2 {
-    margin-bottom: 16px;
-    color: #37352f;
-    font-weight: 600;
-    font-size: 18px;
-}
-
-#status {
-    margin-top: 12px;
-    font-size: 13px;
-    color: #6f6e69;
-    text-align: center;
-    font-weight: 400;
-}
-
-#status[style*="color: rgb(46, 170, 220)"] {
-    background-color: #f0f9ff;
-    border: 1px solid #2eaadc;
-    border-radius: 6px;
-    padding: 8px 12px;
-    margin: 12px auto;
-    font-weight: 500;
-}
-
-/* =============================================================================
-   BUTTONS
-   ============================================================================= */
-/* Primary Button Styles */
-button {
-    padding: 8px 16px;
-    font-size: 14px;
-    font-weight: 500;
-    font-family: inherit;
-    border: none;
-    cursor: pointer;
-    border-radius: 9999px; /* pill shape */
-    margin-bottom: 16px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    transition: all 0.3s ease;
-    background-color: #f7f6f3;
-    border: 1px solid #e9e9e7;
-    color: #37352f;
-    box-shadow: 0 0 15px rgba(188, 153, 102, 0.8); /* static glow */
-}
-
-button:hover {
-    background-color: #f1f0ed;
-    border-color: #d9d9d7;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-button:active {
-    transform: translateY(1px);
-    box-shadow: 0 0 12px rgba(188, 153, 102, 1);
-}
-
-/* Secondary Button Variant */
-.secondary-button {
-    background-color: #f7f6f3;
-    color: #37352f;
-    border: 1px solid #e9e9e7;
-    margin-bottom: 20px;
-}
-
-.secondary-button:hover {
-    background-color: #f1f0ed;
-    border-color: #d9d9d7;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-/* =============================================================================
-   FLASHCARD COMPONENTS
-   ============================================================================= */
-/* Flashcards Container */
-#output {
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-}
-
-/* Individual Flashcard */
-.flashcard {
-    background: #ffffff;
-    border: 1px solid #e9e9e7;
-    border-radius: 8px;
-    padding: 16px;
-    padding-right: 50px; /* Extra space for action buttons */
-    display: flex;
-    flex-direction: column;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    font-family: inherit;
-    position: relative;
-}
-
-.flashcard:hover {
-    border-color: #2eaadc;
-    box-shadow: 0 2px 8px rgba(46, 170, 220, 0.15);
-}
-
-.flashcard.revealed {
-    background-color: #f7f6f3;
-    border-color: #2eaadc;
-}
-
-/* Flashcard Content */
-.flashcard .question {
-    font-weight: 200;
-    margin-bottom: 8px;
-    color: #37352f;
-    font-size: 15px;
-    line-height: 1.4;
-}
-
-.flashcard .answer {
-    display: none;
-    color: #6f6e69;
-    margin-top: 8px;
-    transition: all 0.2s ease;
-    font-size: 14px;
-    line-height: 1.5;
-}
-
-.flashcard.revealed .answer {
-    display: block;
-}
-
-/* =============================================================================
-   FLASHCARD ACTION BUTTONS
-   ============================================================================= */
-/* Edit/Save Button */
-.flashcard .edit-btn,
-.flashcard .save-btn {
-    position: absolute;
-    top: 8px; /* Fixed distance from top */
-    right: 25px; /* Positioned to the left of delete button */
-    background: transparent;
-    border: none;
-    color: #2980b9;
-    font-weight: bold;
-    cursor: pointer;
-    font-size: 14px;
-    padding: 2px 6px;
-    border-radius: 4px;
-    transition: all 0.2s ease;
-    box-shadow: none;
-    z-index: 1;
-}
-
-.flashcard .edit-btn:hover,
-.flashcard .save-btn:hover {
-    background-color: rgba(41, 128, 185, 0.1);
-}
-
-/* Delete Button */
-.flashcard .delete-btn {
-    position: absolute;
-    top: 8px; /* Fixed distance from top */
-    right: 8px;
-    background: transparent;
-    border: none;
-    color: #c0392b;
-    font-weight: bold;
-    cursor: pointer;
-    font-size: 14px;
-    padding: 2px 6px;
-    border-radius: 4px;
-    transition: all 0.2s ease;
-    box-shadow: none;
-    z-index: 1;
-}
-
-.flashcard .delete-btn:hover {
-    background-color: rgba(192, 57, 43, 0.1);
-}
-
-/* =============================================================================
-   FORM ELEMENTS
-   ============================================================================= */
-.edit-input {
-    width: 100%;
-    margin-top: 6px;
-    margin-bottom: 6px;
-    padding: 4px 6px;
-    font-size: 14px;
-    border-radius: 4px;
-    border: 1px solid #ccc;
-    font-family: inherit;
-    box-sizing: border-box;
-    box-shadow: none;
-}
-
-/* =============================================================================
-   ICONS & DECORATIVE ELEMENTS
-   ============================================================================= */
-.sparkle {
-    font-size: 16px;
-}
-
-/* =============================================================================
-   LOADING SPINNER
-   ============================================================================= */
-.loading-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 20px;
-    margin: 16px 0;
-}
-
-.spinner {
-    width: 40px;
-    height: 40px;
-    border: 3px solid #f1f0ed;
-    border-top: 3px solid #2eaadc;
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-    margin-bottom: 12px;
-}
-
-.loading-text {
-    color: #6f6e69;
-    font-size: 14px;
-    font-weight: 400;
-    text-align: center;
-}
-
-/* =============================================================================
-   ANIMATIONS
-   ============================================================================= */
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}
-
-@keyframes sparkle {
-    0%, 100% { 
-        transform: scale(1) rotate(0deg);
-        opacity: 1;
-    }
-    50% { 
-        transform: scale(1.2) rotate(180deg);
-        opacity: 0.8;
-    }
-}
-
-@keyframes dots {
-    0% { content: ""; }
-    33% { content: "."; }
-    66% { content: ".."; }
-    100% { content: "..."; }
-}
-
-/* Auth dot pulsing animation */
-.auth-indicator.connected .auth-dot {
-    background-color: #10b981;
-    animation: pulse 2s ease-in-out infinite;
-}
-
-@keyframes pulse {
-    0%, 100% {
-        transform: scale(1);
-        opacity: 1;
-        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
-    }
-    50% {
-        transform: scale(1.1);
-        opacity: 0.9;
-        box-shadow: 0 0 0 4px rgba(16, 185, 129, 0);
-    }
-}
-
-
+   /* =============================================================================
+      BASE STYLES
+      ============================================================================= */
+   body {
+       font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 
+                    'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 
+                    'Helvetica Neue', sans-serif;
+       min-width: 320px;
+       margin: 0;
+       padding: 0;
+       background-color: #ffffff;
+       color: #37352f;
+       font-size: 14px;
+       line-height: 1.5;
+       font-weight: 400;
+   }
+   
+   /* =============================================================================
+      LAYOUT COMPONENTS
+      ============================================================================= */
+      .container {
+       padding: 16px;
+       display: flex;
+       flex-direction: column;
+       align-items: center;
+       background-color: #ffffff;
+       width: 100%;
+       box-sizing: border-box;
+       position: relative; /* Add this so the dot positions relative to the container */
+   }
+   
+   .logo {
+       width: 100px;
+       height: auto;
+       margin-bottom: 20px;
+   }
+   
+   /* =============================================================================
+      OAUTH COMPONENTS
+      ============================================================================= */
+   /* Settings Menu */
+   .settings-menu {
+       position: absolute;
+       top: 25px;
+       right: 25px;
+       margin-bottom: 0;
+   }
+   
+   .settings-icon {
+       cursor: pointer;
+       width: 24px;
+       height: 24px;
+       opacity: 0.6;
+       transition: opacity 0.2s ease, transform 0.3s ease;
+       user-select: none;
+       display: block;
+   }
+   
+   .settings-menu:hover .settings-icon {
+       opacity: 1;
+       transform: rotate(90deg);
+   }
+   
+   .settings-dropdown {
+       display: none;
+       position: absolute;
+       top: 26px;
+       right: 0;
+       background: white;
+       border: 1px solid #e9e9e7;
+       border-radius: 8px;
+       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+       min-width: 120px;
+       z-index: 1000;
+       padding-top: 4px;
+   }
+   
+   .settings-menu:hover .settings-dropdown,
+   .settings-dropdown:hover {
+       display: block;
+   }
+   
+   .settings-dropdown .logout-btn {
+       width: 100%;
+       margin: 0;
+       padding: 10px 16px;
+       border: none;
+       border-radius: 0;
+       background: transparent;
+       box-shadow: none;
+       text-align: left;
+       font-size: 14px;
+   }
+   
+   .settings-dropdown .logout-btn:hover {
+       background-color: #f7f6f3;
+   }
+   
+   .settings-dropdown .logout-btn:first-child {
+       border-radius: 8px 8px 0 0;
+   }
+   
+   .settings-dropdown .logout-btn:last-child {
+       border-radius: 0 0 8px 8px;
+   }
+   
+   .auth-indicator {
+       display: none;
+   }
+   
+   #authText {
+       display: none;
+   }
+   
+   /* OAuth Controls */
+   .oauth-controls {
+       margin-bottom: 16px;
+       width: 100%;
+   }
+   
+   .connect-btn {
+       background-color: #2563eb;
+       color: white;
+       border: 1px solid #2563eb;
+       width: 100%;
+       justify-content: center;
+   }
+   
+   .connect-btn:hover {
+       background-color: #1d4ed8;
+       border-color: #1d4ed8;
+   }
+   
+   .logout-btn {
+       background-color: #f7f6f3;
+       color: #37352f;
+       border: 1px solid #e9e9e7;
+       width: auto;
+       padding: 6px 16px;
+       font-size: 13px;
+       justify-content: center;
+       box-shadow: 0 0 15px rgba(188, 153, 102, 0.8);
+       transition: all 0.3s ease;
+       align-self: center;
+   }
+   
+   .logout-btn:hover {
+       background-color: #f1f0ed;
+       border-color: #d9d9d7;
+       box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+   }
+   
+   .logout-btn:active {
+       transform: translateY(1px);
+   }
+   
+   /* Page URL Input Section */
+   .page-input-section {
+       margin-bottom: 24px;
+       width: 100%;
+   }
+   
+   .section-label {
+       display: block;
+       margin-bottom: 12px;
+       font-size: 12px;
+       font-weight: 400;
+       color: #9ca3af;
+       text-transform: uppercase;
+       letter-spacing: 0.5px;
+   }
+   
+   /* .page-input-section label {
+       display: block;
+       margin-bottom: 6px;
+       font-size: 13px;
+       font-weight: 500;
+       color: #374151;
+   } */
+   
+   .dropdown-container {
+       position: relative;
+       width: 100%;
+       display: flex;
+       gap: 8px;
+       align-items: stretch; /* Change from center to stretch */
+   }
+   
+   .page-dropdown {
+       flex: 1;
+       padding: 8px 16px;
+       font-size: 14px;
+       border: 1px solid #e9e9e7;
+       border-radius: 9999px;
+       background-color: #f7f6f3;
+       color: #37352f;
+       box-sizing: border-box;
+       transition: all 0.3s ease;
+       cursor: pointer;
+       font-weight: 500;
+       height: auto;
+       font-family: inherit;
+       box-shadow: 0 0 15px rgba(188, 153, 102, 0.8); /* Added golden glow */
+   }
+   
+   .page-dropdown:focus {
+       outline: none;
+       border-color: #2eaadc; /* Updated to match brand color */
+       box-shadow: 0 0 0 3px rgba(46, 170, 220, 0.1);
+   }
+   
+   .page-dropdown:hover {
+       background-color: #f1f0ed;
+       border-color: #d9d9d7;
+       box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Added hover shadow */
+   }
+   
+   .page-dropdown:disabled {
+       background-color: #f3f4f6;
+       cursor: not-allowed;
+       opacity: 0.6;
+       box-shadow: none; /* Remove glow when disabled */
+   }
+   
+   .refresh-btn {
+       padding: 8px 16px; /* Match button padding */
+       font-size: 14px;
+       border: 1px solid #e9e9e7;
+       border-radius: 9999px; /* Match button pill shape */
+       background-color: #f7f6f3;
+       color: #37352f;
+       cursor: pointer;
+       transition: all 0.2s ease;
+       display: flex;
+       align-items: center;
+       justify-content: center;
+       min-width: auto; /* Remove fixed width */
+       height: auto; /* Let it match button height dynamically */
+       margin-bottom: 0;
+       font-weight: 500;
+       box-shadow: 0 0 15px rgba(188, 153, 102, 0.8); /* Match button glow */
+   }
+   
+   .refresh-btn:hover {
+       background-color: #f1f0ed;
+       border-color: #d9d9d7;
+       box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+   }
+   
+   .refresh-btn:disabled {
+       background-color: #f3f4f6;
+       cursor: not-allowed;
+       opacity: 0.6;
+   }
+   
+   .dropdown-help {
+       display: block;
+       margin-top: 4px;
+       font-size: 12px;
+       color: #6b7280;
+       line-height: 1.4;
+   }
+   
+   /* =============================================================================
+      NAVBAR BUTTONS
+      ============================================================================= */
+   .actions-section {
+       width: 100%;
+       margin-bottom: 16px;
+   }
+   
+   .button-navbar {
+       display: flex;
+       gap: 0;
+       margin-bottom: 0;
+       width: 100%;
+       box-sizing: border-box;
+   }
+   
+   .button-navbar button {
+       flex: 1;
+       margin-bottom: 0;
+       border-radius: 0;
+       border-right: none;
+       box-sizing: border-box;
+       white-space: nowrap;
+       display: flex;
+       align-items: center;
+       justify-content: center;
+       text-align: center;
+   }
+   
+   .button-navbar button:first-child {
+       border-top-left-radius: 9999px;
+       border-bottom-left-radius: 9999px;
+   }
+   
+   .button-navbar button:last-child {
+       border-top-right-radius: 9999px;
+       border-bottom-right-radius: 9999px;
+       border-right: 1px solid #e9e9e7;
+   }
+   
+   /* =============================================================================
+      TYPOGRAPHY
+      ============================================================================= */
+   h2 {
+       margin-bottom: 16px;
+       color: #37352f;
+       font-weight: 600;
+       font-size: 18px;
+   }
+   
+   #status {
+       margin-top: 12px;
+       font-size: 13px;
+       color: #6f6e69;
+       text-align: center;
+       font-weight: 400;
+   }
+   
+   #status[style*="color: rgb(46, 170, 220)"] {
+       background-color: #f0f9ff;
+       border: 1px solid #2eaadc;
+       border-radius: 6px;
+       padding: 8px 12px;
+       margin: 12px auto;
+       font-weight: 500;
+   }
+   
+   /* =============================================================================
+      BUTTONS
+      ============================================================================= */
+   /* Primary Button Styles */
+   button {
+       padding: 8px 16px;
+       font-size: 14px;
+       font-weight: 500;
+       font-family: inherit;
+       border: none;
+       cursor: pointer;
+       border-radius: 9999px; /* pill shape */
+       margin-bottom: 16px;
+       display: flex;
+       align-items: center;
+       gap: 8px;
+       transition: all 0.3s ease;
+       background-color: #f7f6f3;
+       border: 1px solid #e9e9e7;
+       color: #37352f;
+       box-shadow: 0 0 15px rgba(188, 153, 102, 0.8); /* static glow */
+   }
+   
+   button:hover {
+       background-color: #f1f0ed;
+       border-color: #d9d9d7;
+       box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+   }
+   
+   button:active {
+       transform: translateY(1px);
+       box-shadow: 0 0 12px rgba(188, 153, 102, 1);
+   }
+   
+   /* Secondary Button Variant */
+   .secondary-button {
+       background-color: #f7f6f3;
+       color: #37352f;
+       border: 1px solid #e9e9e7;
+       margin-bottom: 20px;
+   }
+   
+   .secondary-button:hover {
+       background-color: #f1f0ed;
+       border-color: #d9d9d7;
+       box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+   }
+   
+   /* =============================================================================
+      FLASHCARD COMPONENTS
+      ============================================================================= */
+   /* Flashcards Container */
+   #output {
+       width: 100%;
+       display: flex;
+       flex-direction: column;
+       gap: 12px;
+   }
+   
+   /* Individual Flashcard */
+   .flashcard {
+       background: #ffffff;
+       border: 1px solid #e9e9e7;
+       border-radius: 8px;
+       padding: 16px;
+       padding-right: 50px; /* Extra space for action buttons */
+       display: flex;
+       flex-direction: column;
+       cursor: pointer;
+       transition: all 0.2s ease;
+       font-family: inherit;
+       position: relative;
+   }
+   
+   .flashcard:hover {
+       border-color: #2eaadc;
+       box-shadow: 0 2px 8px rgba(46, 170, 220, 0.15);
+   }
+   
+   .flashcard.revealed {
+       background-color: #f7f6f3;
+       border-color: #2eaadc;
+   }
+   
+   /* Flashcard Content */
+   .flashcard .question {
+       font-weight: 200;
+       margin-bottom: 8px;
+       color: #37352f;
+       font-size: 15px;
+       line-height: 1.4;
+   }
+   
+   .flashcard .answer {
+       display: none;
+       color: #6f6e69;
+       margin-top: 8px;
+       transition: all 0.2s ease;
+       font-size: 14px;
+       line-height: 1.5;
+   }
+   
+   .flashcard.revealed .answer {
+       display: block;
+   }
+   
+   /* =============================================================================
+      FLASHCARD ACTION BUTTONS
+      ============================================================================= */
+   /* Edit/Save Button */
+   .flashcard .edit-btn,
+   .flashcard .save-btn {
+       position: absolute;
+       top: 8px; /* Fixed distance from top */
+       right: 25px; /* Positioned to the left of delete button */
+       background: transparent;
+       border: none;
+       color: #2980b9;
+       font-weight: bold;
+       cursor: pointer;
+       font-size: 14px;
+       padding: 2px 6px;
+       border-radius: 4px;
+       transition: all 0.2s ease;
+       box-shadow: none;
+       z-index: 1;
+   }
+   
+   .flashcard .edit-btn:hover,
+   .flashcard .save-btn:hover {
+       background-color: rgba(41, 128, 185, 0.1);
+   }
+   
+   /* Delete Button */
+   .flashcard .delete-btn {
+       position: absolute;
+       top: 8px; /* Fixed distance from top */
+       right: 8px;
+       background: transparent;
+       border: none;
+       color: #c0392b;
+       font-weight: bold;
+       cursor: pointer;
+       font-size: 14px;
+       padding: 2px 6px;
+       border-radius: 4px;
+       transition: all 0.2s ease;
+       box-shadow: none;
+       z-index: 1;
+   }
+   
+   .flashcard .delete-btn:hover {
+       background-color: rgba(192, 57, 43, 0.1);
+   }
+   
+   /* =============================================================================
+      FORM ELEMENTS
+      ============================================================================= */
+   .edit-input {
+       width: 100%;
+       margin-top: 6px;
+       margin-bottom: 6px;
+       padding: 4px 6px;
+       font-size: 14px;
+       border-radius: 4px;
+       border: 1px solid #ccc;
+       font-family: inherit;
+       box-sizing: border-box;
+       box-shadow: none;
+   }
+   
+   /* =============================================================================
+      ICONS & DECORATIVE ELEMENTS
+      ============================================================================= */
+   .sparkle {
+       font-size: 16px;
+   }
+   
+   /* =============================================================================
+      LOADING SPINNER
+      ============================================================================= */
+   .loading-container {
+       display: flex;
+       flex-direction: column;
+       align-items: center;
+       justify-content: center;
+       padding: 20px;
+       margin: 16px 0;
+   }
+   
+   .spinner {
+       width: 40px;
+       height: 40px;
+       border: 3px solid #f1f0ed;
+       border-top: 3px solid #2eaadc;
+       border-radius: 50%;
+       animation: spin 1s linear infinite;
+       margin-bottom: 12px;
+   }
+   
+   .loading-text {
+       color: #6f6e69;
+       font-size: 14px;
+       font-weight: 400;
+       text-align: center;
+   }
+   
+   /* =============================================================================
+      ANIMATIONS
+      ============================================================================= */
+   @keyframes spin {
+       0% { transform: rotate(0deg); }
+       100% { transform: rotate(360deg); }
+   }
+   
+   @keyframes sparkle {
+       0%, 100% { 
+           transform: scale(1) rotate(0deg);
+           opacity: 1;
+       }
+       50% { 
+           transform: scale(1.2) rotate(180deg);
+           opacity: 0.8;
+       }
+   }
+   
+   @keyframes dots {
+       0% { content: ""; }
+       33% { content: "."; }
+       66% { content: ".."; }
+       100% { content: "..."; }
+   }

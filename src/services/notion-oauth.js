@@ -1,6 +1,5 @@
-import { NOTION_OAUTH_CLIENT_ID, NOTION_OAUTH_CLIENT_SECRET } from '../../secrets.js';
+import { NOTION_OAUTH_CLIENT_ID, SUPABASE_URL, SUPABASE_ANON_KEY } from '../../secrets.js';
 import { saveUserEmail } from '../services/supabase-client.js';
-
 
 const REDIRECT_URI = 'https://mkdjckjdkeconibpdkdhpoknmpoeabbp.chromiumapp.org';
 const TOKEN_STORAGE_KEY = 'notion_access_token';
@@ -71,7 +70,7 @@ class NotionOAuth {
             console.log('Client ID:', NOTION_OAUTH_CLIENT_ID);
             console.log('Redirect URI:', REDIRECT_URI);
             
-            // Construct authorization URL
+            // Construct authorization URL (Client ID can be public)
             const authParams = new URLSearchParams({
                 client_id: NOTION_OAUTH_CLIENT_ID,
                 response_type: 'code',
@@ -83,11 +82,8 @@ class NotionOAuth {
 
             console.log('Launching OAuth flow with URL:', authUrl);
 
-            // Launch OAuth flow using tab-based approach (more reliable)
+            // Launch OAuth flow using tab-based approach
             console.log('Starting OAuth flow using tab-based approach...');
-            console.log('Full auth URL:', authUrl);
-            
-            // Use tab-based OAuth flow as the default method
             const redirectUrl = await this.performTabBasedOAuth(authUrl);
 
             console.log('OAuth redirect URL received:', redirectUrl);
@@ -102,7 +98,7 @@ class NotionOAuth {
 
             console.log('Authorization code received:', authCode);
 
-            // Exchange authorization code for access token
+            // Exchange authorization code for access token via Supabase Edge Function
             const accessToken = await this.exchangeCodeForToken(authCode);
             
             // Store the access token
@@ -123,20 +119,19 @@ class NotionOAuth {
     }
 
     /**
-     * Exchange authorization code for access token
+     * Exchange authorization code for access token using Supabase Edge Function
      */
     async exchangeCodeForToken(authCode) {
         try {
-            const tokenUrl = 'https://api.notion.com/v1/oauth/token';
+            console.log('Exchanging code for token via Supabase Edge Function...');
             
-            const response = await fetch(tokenUrl, {
+            const response = await fetch(`${SUPABASE_URL}/functions/v1/exchange-notion-token`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Basic ${btoa(`${NOTION_OAUTH_CLIENT_ID}:${NOTION_OAUTH_CLIENT_SECRET}`)}`
+                    'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
                 },
                 body: JSON.stringify({
-                    grant_type: 'authorization_code',
                     code: authCode,
                     redirect_uri: REDIRECT_URI
                 })
@@ -147,18 +142,17 @@ class NotionOAuth {
                 throw new Error(`Token exchange failed: ${response.status} - ${errorText}`);
             }
     
-            const tokenData = await response.json();
+            const data = await response.json();
             
-            if (!tokenData.access_token) {
-                throw new Error('No access token in response');
+            if (!data.success || !data.access_token) {
+                throw new Error(data.error || 'No access token in response');
             }
     
             console.log('Access token obtained successfully');
-            console.log('🔍 Full tokenData:', tokenData);
             
-            // NEW: Save user email to Supabase
-            const userEmail = tokenData.owner?.user?.person?.email;
-            const notionUserId = tokenData.owner?.user?.id;
+            // Save user email to Supabase if available
+            const userEmail = data.user_email;
+            const notionUserId = data.notion_user_id;
 
             console.log('🔍 Extracted email:', userEmail);
             console.log('🔍 Extracted notion user ID:', notionUserId);
@@ -167,11 +161,15 @@ class NotionOAuth {
                 console.log('✅ Email found, saving to Supabase...');
                 const result = await saveUserEmail(userEmail, notionUserId);
                 console.log('📊 Supabase save result:', result);
+                
+                // Store email locally for quick access
+                await chrome.storage.local.set({ user_email: userEmail });
+                console.log('✅ Email stored in local storage:', userEmail);
             } else {
-                console.log('❌ No email found in tokenData');
+                console.log('❌ No email found in response');
             }
     
-            return tokenData.access_token;
+            return data.access_token;
     
         } catch (error) {
             console.error('Token exchange failed:', error);
@@ -284,9 +282,6 @@ class NotionOAuth {
         }
     }
 
-    /**
-     * Save user info if we haven't already (for already-authenticated users)
-     */
     /**
      * Save user info if we haven't already (for already-authenticated users)
      */

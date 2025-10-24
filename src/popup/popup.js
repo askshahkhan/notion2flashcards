@@ -106,14 +106,18 @@ class PageManager {
       return;
     }
     
-    pages.forEach(page => {
+    pages.forEach((page, index) => {
       const option = document.createElement('option');
       option.value = page.id;
       option.textContent = page.title;
       option.dataset.url = page.url;
+
+      if (index === 0) {
+        option.selected = true;
+      }
       this.elements.notionPageDropdown.appendChild(option);
     });
-    
+
     this.updateFetchButtonState();
   }
 

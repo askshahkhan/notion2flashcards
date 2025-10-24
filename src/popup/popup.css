@@ -162,7 +162,7 @@
    /* Page URL Input Section */
    .page-input-section {
        margin-bottom: 24px;
-       width: 100%;
+       width: calc(100% - 30px);
    }
    
    .section-label {
@@ -245,8 +245,8 @@
       NAVBAR BUTTONS
       ============================================================================= */
    .actions-section {
-       width: 100%;
-       margin-bottom: 16px;
+        width: calc(100% - 30px);
+        margin-bottom: 16px;
    }
    
    .button-navbar {
@@ -315,7 +315,7 @@
    button {
        padding: 8px 16px;
        font-size: 14px;
-       font-weight: 250;
+       font-weight: 300;
        font-family: inherit;
        border: none;
        cursor: pointer;
@@ -330,7 +330,7 @@
        color: #37352f;
        box-shadow: 0 0 15px rgba(188, 153, 102, 0.4); /* static glow */
    }
-   
+    
    button:hover {
        background-color: #f1f0ed;
        border-color: #d9d9d7;

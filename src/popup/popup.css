@@ -166,14 +166,23 @@
    }
    
    .section-label {
-       display: block;
-       margin-bottom: 12px;
-       font-size: 12px;
-       font-weight: 400;
-       color: #9ca3af;
-       text-transform: uppercase;
-       letter-spacing: 0.5px;
-   }
+        display: flex;
+        align-items: center;
+        /* justify-content: center; */
+        gap: 10px;
+        margin-bottom: 12px;
+        font-size: 12px;
+        font-weight: 400;
+        color: #9ca3af;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .section-icon {
+        width: 14px;
+        height: 14px;
+        opacity: 0.7;
+    }
    
    /* .page-input-section label {
        display: block;

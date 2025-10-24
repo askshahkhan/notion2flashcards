@@ -192,21 +192,22 @@
    }
    
    .page-dropdown {
-       flex: 1;
-       padding: 8px 16px;
-       font-size: 14px;
-       border: 1px solid #e9e9e7;
-       border-radius: 9999px;
-       background-color: #f7f6f3;
-       color: #37352f;
-       box-sizing: border-box;
-       transition: all 0.3s ease;
-       cursor: pointer;
-       font-weight: 500;
-       height: auto;
-       font-family: inherit;
-       box-shadow: 0 0 15px rgba(188, 153, 102, 0.8); /* Added golden glow */
-   }
+        flex: 1;
+        padding: 6px 16px; /* Reduced from 8px to 6px */
+        font-size: 14px;
+        border: 1px solid #e9e9e7;
+        border-radius: 9999px;
+        background-color: #f7f6f3;
+        color: #37352f;
+        box-sizing: border-box;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        font-weight: 500;
+        height: 36px; /* Add explicit height */
+        line-height: 1.2; /* Tighter line height */
+        font-family: inherit;
+        box-shadow: 0 0 15px rgba(188, 153, 102, 0.5);
+    }
    
    .page-dropdown:focus {
        outline: none;
@@ -225,37 +226,6 @@
        cursor: not-allowed;
        opacity: 0.6;
        box-shadow: none; /* Remove glow when disabled */
-   }
-   
-   .refresh-btn {
-       padding: 8px 16px; /* Match button padding */
-       font-size: 14px;
-       border: 1px solid #e9e9e7;
-       border-radius: 9999px; /* Match button pill shape */
-       background-color: #f7f6f3;
-       color: #37352f;
-       cursor: pointer;
-       transition: all 0.2s ease;
-       display: flex;
-       align-items: center;
-       justify-content: center;
-       min-width: auto; /* Remove fixed width */
-       height: auto; /* Let it match button height dynamically */
-       margin-bottom: 0;
-       font-weight: 500;
-       box-shadow: 0 0 15px rgba(188, 153, 102, 0.8); /* Match button glow */
-   }
-   
-   .refresh-btn:hover {
-       background-color: #f1f0ed;
-       border-color: #d9d9d7;
-       box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-   }
-   
-   .refresh-btn:disabled {
-       background-color: #f3f4f6;
-       cursor: not-allowed;
-       opacity: 0.6;
    }
    
    .dropdown-help {
@@ -353,7 +323,7 @@
        background-color: #f7f6f3;
        border: 1px solid #e9e9e7;
        color: #37352f;
-       box-shadow: 0 0 15px rgba(188, 153, 102, 0.8); /* static glow */
+       box-shadow: 0 0 15px rgba(188, 153, 102, 0.5); /* static glow */
    }
    
    button:hover {

@@ -50,7 +50,7 @@ class DOMElements {
     // Page selection elements
     this.pageInputSection = document.getElementById("pageInputSection");
     this.notionPageDropdown = document.getElementById("notionPageDropdown");
-    this.refreshPagesButton = document.getElementById("refreshPagesButton");
+    // this.refreshPagesButton = document.getElementById("refreshPagesButton");
     
     // Action buttons
     this.fetchButton = document.getElementById("fetchButton");
@@ -119,7 +119,7 @@ class PageManager {
 
   setDropdownLoading(loading) {
     this.elements.notionPageDropdown.disabled = loading;
-    this.elements.refreshPagesButton.disabled = loading;
+    // this.elements.refreshPagesButton.disabled = loading;
     
     if (loading) {
       this.elements.notionPageDropdown.innerHTML = '<option value="">Loading pages...</option>';
@@ -447,9 +447,9 @@ class PopupApp {
       this.pageManager.updateFetchButtonState();
     });
 
-    this.elements.refreshPagesButton.addEventListener("click", () => {
-      this.pageManager.loadPages();
-    });
+    // this.elements.refreshPagesButton.addEventListener("click", () => {
+    //   this.pageManager.loadPages();
+    // });
 
     // Flashcard generation
     this.elements.fetchButton.addEventListener("click", () => {

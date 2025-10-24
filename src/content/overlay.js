@@ -81,7 +81,7 @@
     .panel {
       margin-top: 25px;
       display: none;
-      width: 350px; height: 350px;
+      width: 350px; height: 330px;
       background: #ffffff;
       border: 1px solid #e5e7eb;
       border-radius: 40px;

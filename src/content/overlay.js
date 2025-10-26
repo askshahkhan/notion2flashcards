@@ -91,7 +91,7 @@
     }
 
     .panel.expanded {
-      height: 600px;
+      height: 700px;
     }
 
     .panel.open { display: block; }

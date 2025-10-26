@@ -141,7 +141,9 @@ export class UIController {
         this.updateStatus(`Loaded ${index} / ${cards.length} flashcards…`);
       } else {
         clearInterval(interval);
-        this.updateStatus(""); // remove final message
+        // Keep final count message with icon matching section label style
+        const iconHtml = '<img src="/assets/flashcards-icon.svg" alt="" class="section-icon">';
+        this.statusDiv.innerHTML = `${iconHtml}${cards.length} flashcards generated`;
         
         if (onComplete) {
           onComplete();
@@ -178,16 +180,17 @@ export class UIController {
     button.disabled = false;
   }
 
-  // Display cost information
+  // Display cost information (COMMENTED OUT FOR NOW - KEEP FOR FUTURE USE)
   showCostInfo(costInfo) {
     if (!costInfo) return;
 
-    const totalCostFormatted = (costInfo.totalCost).toFixed(4);
-    const message = `Generation cost: $${totalCostFormatted} (${costInfo.totalTokens} tokens)`;
+    // COMMENTED OUT: Cost display in UI
+    // const totalCostFormatted = (costInfo.totalCost).toFixed(4);
+    // const message = `Generation cost: $${totalCostFormatted} (${costInfo.totalTokens} tokens)`;
+    // 
+    // this.updateStatus(message, '#2eaadc');
     
-    this.updateStatus(message, '#2eaadc');
-    
-    // Also log detailed cost breakdown to console
+    // Keep console logging for debugging purposes
     console.log('💰 Cost Breakdown:', {
       model: costInfo.model,
       inputTokens: costInfo.inputTokens,

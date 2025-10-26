@@ -7,6 +7,7 @@
   "host_permissions": [
     "https://api.notion.com/*",
     "https://www.notion.so/*",
+    "https://*.notion.site/*",
     "https://api.openai.com/*",
     "https://mkdjckjdkeconibpdkdhpoknmpoeabbp.chromiumapp.org/*",
     "https://ecshzdgyoduuwaftjppg.supabase.co/*"
@@ -20,7 +21,10 @@
   },
   "content_scripts": [
     {
-      "matches": ["<all_urls>"],
+      "matches": [
+        "https://www.notion.so/*",
+        "https://*.notion.site/*"
+      ],
       "js": ["src/content/overlay.js"],
       "run_at": "document_idle"
     }
@@ -32,7 +36,10 @@
         "assets/*",
         "vendor/*"
       ],
-      "matches": ["<all_urls>"]
+      "matches": [
+        "https://www.notion.so/*",
+        "https://*.notion.site/*"
+      ]
     }
   ],
   "icons": {
